@@ -1,0 +1,4 @@
+# pnpm settings: allow only esbuild's install script (supply-chain safety).
+allowBuilds:
+  esbuild: true
+

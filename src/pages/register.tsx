@@ -24,7 +24,7 @@ function Field({ field, value, error, onChange, language }: {
 }) {
   const id=`field-${field.name}`;
   return <div className={`field ${field.full?'full':''}`}>
-    <label htmlFor={id}>{field.label[language]}{field.required && <span aria-label={language==='bn'?'আবশ্যক':'Required'}> *</span>}</label>
+    <label htmlFor={id}>{field.label[language]}{field.required && <span aria-label={language==='bn'?'আবশ্যক':'Required'}> *</span>}{field.badge && <span className="field-badge" aria-label={field.badge}>{field.badge}</span>}</label>
     {field.type==='textarea' ? <textarea id={id} value={value||''} placeholder={field.placeholder?.[language]} onChange={e=>onChange(field.name,e.target.value)} aria-invalid={!!error} aria-describedby={error?`${id}-error`:undefined} data-testid={`input-${field.name}`} /> :
     field.type==='select' ? <select id={id} value={value||''} onChange={e=>onChange(field.name,e.target.value)} aria-invalid={!!error} aria-describedby={error?`${id}-error`:undefined} data-testid={`input-${field.name}`}>
       {(field.options||[]).map((option)=><option key={option.value} value={option.value}>{option.label[language]}</option>)}

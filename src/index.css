@@ -437,7 +437,8 @@ button { user-select: none; -webkit-user-select: none; }
 .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:19px 16px; }
 .field { display:flex; flex-direction:column; gap:7px; min-width:0; }
 .field.full { grid-column:1/-1; }
-.field label,.field-label { color:#5d3c49; font-weight:700; font-size:.88rem; }
+.field label,.field-label { color:#5d3c49; font-weight:700; font-size:.88rem; display:flex; align-items:center; gap:8px; }
+.field-badge { background:#a82450; color:#fff; font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:20px; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
 .field input,.field select,.field textarea { width:100%; border:1px solid #ddcbd1; border-radius:9px; padding:12px 13px; background:#fffdfa; color:#452b36; min-height:46px; }
 .field textarea { min-height:120px; resize:vertical; }
 .field-help { font-size:.78rem; color:#84747b; }

@@ -20,6 +20,8 @@ const option = (value: string, bn: string, en: string): RegistrationOption => ({
 });
 const selectPrompt = option('', 'নির্বাচন করুন', 'Select an option');
 const yesNoOptions = [selectPrompt, option('yes', 'হ্যাঁ', 'Yes'), option('no', 'না', 'No')];
+const siblingRelationOptions = [selectPrompt, option('brother', 'ভাই', 'Brother'), option('sister', 'বোন', 'Sister')];
+const siblingMaritalStatusOptions = [selectPrompt, option('never-married', 'কখনো বিয়ে করেননি', 'Never Married'), option('married', 'বিবাহিত', 'Married'), option('divorced', 'বিচ্ছেদ', 'Divorced'), option('widowed', 'বিধবা / বিধুর', 'Widowed')];
 
 export const registrationSections: {
   title: LocaleText;
@@ -67,11 +69,6 @@ export const registrationSections: {
       { name: 'fatherOccupation', label: text('পিতার পেশা', 'Father’s occupation') },
       { name: 'motherName', label: text('মাতার নাম', 'Mother’s name'), badge: 'PRIVATE' },
       { name: 'motherOccupation', label: text('মাতার পেশা', 'Mother’s occupation') },
-      { name: 'siblings', label: text('ভাই-বোনের সংখ্যা', 'Number of siblings') },
-      { name: 'siblingName', label: text('ভাই / বোনের নাম', "Sibling's name") },
-      { name: 'siblingWork', label: text('ভাই / বোনের কাজ', "Sibling's work") },
-      { name: 'siblingMaritalStatus', label: text('ভাই / বোনের বিবাহের অবস্থা', "Sibling's marital status"), type: 'select', options: yesNoOptions },
-      { name: 'siblingOccupation', label: text('ভাই / বোনের পেশা', "Sibling's occupation") },
       { name: 'familyBackground', label: text('পারিবারিক পরিচিতি', 'Family details'), full: true },
     ],
   },
@@ -120,6 +117,13 @@ export const memberFields: RegistrationFieldDefinition[] = [
   { name: 'memberName', label: text('সদস্যের পূর্ণ নাম', 'Member’s full name'), required: true },
   { name: 'memberRelation', label: text('আপনার সাথে সম্পর্ক', 'Relationship to you'), required: true },
   { name: 'memberPhone', label: text('সদস্যের যোগাযোগ নম্বর', 'Member’s contact number'), type: 'tel' },
+];
+
+export const siblingFields: RegistrationFieldDefinition[] = [
+  { name: 'siblingRelation', label: text('সibling সম্পর্ক', 'Sibling Relation'), type: 'select', options: siblingRelationOptions },
+  { name: 'siblingName', label: text('সibling নাম', "Sibling's Name"), badge: 'PRIVATE', placeholder: text('নাম লিখুন', 'Enter name') },
+  { name: 'siblingOccupation', label: text('পেশা', 'Occupation'), placeholder: text('যেমন: ডাক্টর, ইঞ্জিনিয়ার', 'e.g. Doctor, Engineer') },
+  { name: 'siblingMaritalStatus', label: text('বিবাহের helyzet', 'Marital Status'), type: 'select', options: siblingMaritalStatusOptions },
 ];
 
 export const requiredByStep: Record<number, string[]> = {

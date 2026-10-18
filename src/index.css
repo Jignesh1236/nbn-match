@@ -445,7 +445,9 @@ button { user-select: none; -webkit-user-select: none; }
 .field-error { font-size:.8rem; color:#a52246; }
 .form-warning { border:1px solid #e7c7d1; background:#fff3f5; color:#77364a; border-radius:12px; padding:15px 17px; line-height:1.65; font-size:.89rem; }
 .form-actions { display:flex; justify-content:space-between; gap:12px; margin-top:30px; }
-.file-box { border:1px dashed #caa9b5; background:#fff9f7; border-radius:12px; padding:22px; }
+.file-box { border:2px dashed #a82450; background:#fff9f7; border-radius:12px; padding:22px; }
+.sibling-section { margin-top:30px; }
+.sibling-card { border:1px solid #e7d4d9; background:#fff; border-radius:12px; padding:18px 20px; margin-top:12px; }
 .file-list { display:flex; flex-wrap:wrap; gap:10px; margin-top:15px; }
 .file-chip { padding:8px 10px; border:1px solid #e7d4d9; border-radius:8px; color:#684351; font-size:.84rem; display:flex; gap:10px; align-items:center; }
 .file-chip button { border:0; color:#9b244c; background:none; cursor:pointer; }

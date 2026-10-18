@@ -10,6 +10,7 @@ import {
   registrationLabels,
   registrationSections,
   requiredByStep,
+  siblingFields,
 } from '@/lib/registration-copy';
 import { submitRegistration } from '@/lib/registration-service';
 
@@ -51,10 +52,13 @@ function RegistrationForm() {
   const [values,setValues]=useState<Values>({});
   const [errors,setErrors]=useState<Record<string,string>>({});
   const [files,setFiles]=useState<File[]>([]);
+  const [siblings,setSiblings]=useState<Record<string,string>[]>([{}] );
   const [result,setResult]=useState('');
   const fileRef=useRef<HTMLInputElement>(null);
   const section=registrationSections[step];
   const update=(name:string,value:string)=>{setValues(old=>({...old,[name]:value}));setErrors(old=>({...old,[name]:''}));};
+  const addSibling=()=>setSiblings(old=>[...old, {}]);
+  const removeSibling=(index:number)=>setSiblings(old=>old.filter((_,i)=>i!==index));
   const validate=()=>{
     const next:Record<string,string>={};
     (requiredByStep[step]||[]).forEach(name=>{if(!values[name]?.trim()) next[name]=text.requiredError;});
@@ -108,12 +112,45 @@ function RegistrationForm() {
             {memberFields.map(field=><Field key={field.name} field={field} value={values[field.name]||''} error={errors[field.name]} onChange={update} language={language} />)}
           </>}
         </div>}
+        {step===1 && <div className="sibling-section">
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+            <h3 style={{color:'#5d3446',margin:0,fontSize:'1.1rem'}}>Siblings</h3>
+            <button type="button" onClick={addSibling} style={{display:'flex',alignItems:'center',gap:6,background:'none',border:0,color:'#b63861',cursor:'pointer',fontWeight:600,fontSize:'.9rem'}}>
+              <span style={{width:20,height:20,borderRadius:'50%',border:'1px solid #b63861',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'.85rem',fontWeight:700,color:'#b63861'}}>+</span>
+              Add Sibling
+            </button>
+          </div>
+          {siblings.map((sibling,index)=><div key={index} className="sibling-card">
+            <div style={{color:'#b63861',fontWeight:700,fontSize:'.85rem',marginBottom:12,marginLeft:4}}>SIBLING {index+1}</div>
+            <div className="form-grid" style={{gap:'16px 12px'}}>
+              {siblingFields.map(field=>{
+                const fieldName=`${field.name}-${index}`;
+                return <Field key={fieldName} field={field} value={sibling[field.name]||''} error={errors[fieldName]} onChange={(name,val)=>{
+                  const next=[...siblings];
+                  next[index]={...next[index],[name]:val};
+                  setSiblings(next);
+                  setErrors(old=>({...old,[fieldName]:''}));
+                }} language={language} />;
+              })}
+              <button type="button" onClick={()=>removeSibling(index)} style={{gridColumn:'1/-1',justifySelf:'start',marginTop:8,background:'none',border:0,color:'#a52246',cursor:'pointer',fontSize:'.85rem',textDecoration:'underline'}}>
+                Remove Sibling
+              </button>
+            </div>
+          </div>)}
+        </div>}
         {step===5 && <div>
           <div className="file-box">
-            <FileText size={24} color="#9b3157" />
-            <h3 style={{color:'#5d3446',margin:'9px 0 4px'}}>{text.chooseDocuments} <span style={{fontSize:'.8rem',fontWeight:400}}>{text.optionalDemo}</span></h3>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+              <FileText size={20} color="#9b3157" />
+              <span style={{fontWeight:700,color:'#5d3446'}}>{text.chooseDocuments}</span>
+              <span style={{fontSize:'.8rem',fontWeight:400,color:'#806f76'}}>{text.optionalDemo}</span>
+            </div>
             <p style={{color:'#806f76',fontSize:'.88rem',lineHeight:1.6}}>{text.uploadInstructions}</p>
-            <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple onChange={e=>addFiles(e.target.files)} aria-label={text.fileInputLabel} data-testid="input-documents" />
+            <label style={{display:'inline-flex',alignItems:'center',gap:8,padding:'10px 16px',border:'1px solid #ddcbd1',borderRadius:'9px',background:'#fffdfa',color:'#452b36',cursor:'pointer',fontSize:'.95rem'}}>
+              Choose Files
+              <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple onChange={e=>addFiles(e.target.files)} aria-label={text.fileInputLabel} data-testid="input-documents" style={{display:'none'}} />
+              <span style={{fontSize:'.85rem',color:'#806f76'}}>No file chosen</span>
+            </label>
             {files.length>0 && <div className="file-list">{files.map((file,index)=><div className="file-chip" key={`${file.name}-${index}`}>
               <LocalPreview file={file} language={language} />
               <span>{file.name} · {(file.size/1024/1024).toFixed(1)} MB</span>

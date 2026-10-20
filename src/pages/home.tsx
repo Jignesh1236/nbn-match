@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'wouter';
+import { Link } from 'react-router-dom';
 import { ArrowRight, Film, Play, X } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
 import { useLanguage, type Language } from '@/lib/language';
@@ -212,7 +212,7 @@ function Footer() {
         <a href="#about">{text.nav[1]}</a>
         <a href="#how-it-works">{text.nav[2]}</a>
         <a href="#stories">{text.nav[3]}</a>
-        <Link href="/register">{text.register}</Link>
+        <Link to="/register">{text.register}</Link>
       </nav>
       <div className="footer-information">
         <h3>{text.footerInformation}</h3>
@@ -249,7 +249,7 @@ export default function HomePage() {
           <h1>{text.heroTitle} <span style={{ color: '#b6305d' }}>{text.heroAccent}</span></h1>
           <p>{text.heroDescription}</p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 26 }}>
-            <Link className="button-primary" href="/register" data-testid="link-register-hero">{text.register} <ArrowRight size={17} /></Link>
+            <Link className="button-primary" to="/register" data-testid="link-register-hero">{text.register} <ArrowRight size={17} /></Link>
             <a className="button-outline" href="#stories" data-testid="link-watch-stories"><Play size={15} /> {text.watchVideos}</a>
           </div>
         </div>
@@ -275,7 +275,7 @@ export default function HomePage() {
       </div></section>
       <section className="section"><div className="container-wide"><div className="cta-band">
         <div><span className="eyebrow">{text.ctaEyebrow}</span><h2>{text.ctaTitle}</h2><p>{text.ctaDescription}</p></div>
-        <Link className="button-primary" href="/register" data-testid="link-register-cta">{text.viewForm} <ArrowRight size={17} /></Link>
+        <Link className="button-primary" to="/register" data-testid="link-register-cta">{text.viewForm} <ArrowRight size={17} /></Link>
       </div></div></section>
       <section className="section" id="faq" style={{ paddingTop: 45 }}><div className="container-wide">
         <div className="section-heading faq-heading"><span className="eyebrow">{text.faqEyebrow}</span><h2>{text.faqTitle}</h2><p>{text.faqDescription}</p></div><FAQ />

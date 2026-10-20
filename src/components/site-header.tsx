@@ -1,5 +1,5 @@
 import { useState, type MouseEvent } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { LanguageToggle } from '@/components/language-toggle';
 import { useLanguage, type Language } from '@/lib/language';
@@ -50,14 +50,15 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const hidden = useScrollDirection();
   const { language } = useLanguage();
-  const [location, navigate] = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const text = headerLabels[language];
 
   const handleSectionClick = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
     const id = href.slice(1);
     const target = document.getElementById(id);
     // On the home page the section exists: default anchor + Lenis smooth scroll.
-    if (target && location === '/') return;
+    if (target && location.pathname === '/') return;
     event.preventDefault();
     // Section exists but we are on another page: scroll directly.
     if (target) {
@@ -77,11 +78,11 @@ export function SiteHeader() {
 
   return <header className={`site-header${hidden && !open ? ' header-hidden' : ''}`}>
     <div className="container-wide" style={{ minHeight: 78, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
-      <Link href="/" aria-label={`${text.brand} — ${text.nav[0]}`} data-testid="link-home"><img src="/images/nbn-logo.jpeg" alt="NBN Match Making Event" draggable={false} style={{ width: 72, height: 65, objectFit: 'contain', mixBlendMode: 'multiply' }} /></Link>
+      <Link to="/" aria-label={`${text.brand} — ${text.nav[0]}`} data-testid="link-home"><img src="/images/nbn-logo.jpeg" alt="NBN Match Making Event" draggable={false} style={{ width: 72, height: 65, objectFit: 'contain', mixBlendMode: 'multiply' }} /></Link>
       <nav className="desktop-nav" aria-label={text.mainNavigation} style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
         {text.nav.map((label, index) => <a className="nav-link" key={sectionLinks[index]} href={sectionLinks[index]} data-testid={`link-nav-${sectionLinks[index].slice(1)}`} onClick={handleSectionClick(sectionLinks[index])}>{label}</a>)}
         <LanguageToggle />
-        <Link className="button-primary" href="/register" data-testid="link-register-nav">{text.register} <ArrowRight size={16} /></Link>
+        <Link className="button-primary" to="/register" data-testid="link-register-nav">{text.register} <ArrowRight size={16} /></Link>
       </nav>
       <div className="mobile-header-actions">
         <LanguageToggle />
@@ -92,7 +93,7 @@ export function SiteHeader() {
     </div>
     {open && <nav className="mobile-nav" aria-label={text.mobileNavigation}>
       {text.nav.map((label, index) => <a className="nav-link" key={sectionLinks[index]} href={sectionLinks[index]} onClick={(event) => { setOpen(false); handleSectionClick(sectionLinks[index])(event); }}>{label}</a>)}
-      <Link className="button-primary" href="/register" onClick={() => setOpen(false)}>{text.register} <ArrowRight size={16} /></Link>
+      <Link className="button-primary" to="/register" onClick={() => setOpen(false)}>{text.register} <ArrowRight size={16} /></Link>
     </nav>}
   </header>;
 }

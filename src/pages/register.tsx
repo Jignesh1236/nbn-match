@@ -12,6 +12,15 @@ import {
   type RegistrationFieldDefinition,
 } from '@/lib/registration-copy';
 import {
+  clearError,
+  clearSiblingErrors,
+  collectPrivateFieldNames,
+  removeSiblingAt,
+  serializeSiblings,
+  siblingFieldKey,
+  validateSiblings,
+} from '@/lib/registration-siblings';
+import {
   getOpenEvent,
   submitRegistration,
   uploadDocument,
@@ -23,31 +32,6 @@ type Values = Record<string, string>;
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-/** Only fields whose definition carries the PRIVATE badge stay hidden from other users. */
-const PRIVATE_BADGE = 'PRIVATE';
-
-function isPrivateField(field: RegistrationFieldDefinition) {
-  return field.badge === PRIVATE_BADGE;
-}
-
-/** Storage keys of every private field for the current sibling count (sibling keys are suffixed `-index`). */
-function collectPrivateFieldNames(siblingCount: number) {
-  const names = new Set<string>();
-  for (const section of registrationSections) {
-    for (const field of section.fields) {
-      if (isPrivateField(field)) names.add(field.name);
-    }
-  }
-  for (const field of memberFields) {
-    if (isPrivateField(field)) names.add(field.name);
-  }
-  for (const field of siblingFields) {
-    if (!isPrivateField(field)) continue;
-    for (let index = 0; index < siblingCount; index += 1) names.add(`${field.name}-${index}`);
-  }
-  return [...names];
-}
 
 function Field({
   field,
@@ -222,7 +206,7 @@ function RegistrationForm() {
 
   const update = (name: string, value: string) => {
     setValues(old => ({ ...old, [name]: value }));
-    setErrors(old => (old[name] ? { ...old, [name]: '' } : old));
+    setErrors(old => clearError(old, name));
   };
 
   const updateSibling = (index: number, name: string, value: string) => {
@@ -231,12 +215,17 @@ function RegistrationForm() {
       next[index] = { ...next[index], [name]: value };
       return next;
     });
-    const errorKey = `${name}-${index}`;
-    setErrors(old => (old[errorKey] ? { ...old, [errorKey]: '' } : old));
+    setErrors(old => clearError(old, siblingFieldKey(name, index)));
   };
 
   const addSibling = () => setSiblings(old => [...old, {}]);
-  const removeSibling = (index: number) => setSiblings(old => old.filter((_, i) => i !== index));
+  const removeSibling = (index: number) => {
+    setSiblings(old => removeSiblingAt(old, index));
+    // Removing a card shifts the remaining cards down, so the index-based
+    // error keys no longer point at the right card. Drop them and let the
+    // next validation run rebuild them.
+    setErrors(clearSiblingErrors);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -271,11 +260,7 @@ function RegistrationForm() {
     if (step === 0 && values.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email)) next.email = text.emailError;
     if (step === 1) {
       // A half-filled sibling entry is an error; a completely empty one is just an unused card.
-      siblings.forEach((sibling, index) => {
-        const entries = Object.entries(sibling);
-        const partiallyFilled = entries.some(([key, val]) => key !== 'siblingName' && val?.trim());
-        if (partiallyFilled && !sibling.siblingName?.trim()) next[`siblingName-${index}`] = text.requiredError;
-      });
+      Object.assign(next, validateSiblings(siblings, text.requiredError));
     }
     if (step === 4 && memberMode) {
       ['memberName', 'memberRelation'].forEach(name => {
@@ -334,7 +319,9 @@ function RegistrationForm() {
         guardian_charge: 0,
         form_data: {
           ...values,
-          siblings,
+          // Siblings are stored under their bare field names so the admin
+          // panel can read them with the regular field definitions.
+          siblings: serializeSiblings(siblings),
           photo: photoFile?.name ?? null,
           idCard: idCardFile?.name ?? null,
           paymentMethod,
@@ -474,7 +461,9 @@ function RegistrationForm() {
                           idPrefix={`sibling-${index}-`}
                           value={sibling[field.name] || ''}
                           error={errors[fieldName]}
-                          onChange={(name, val) => updateSibling(index, name, val)}
+                          // The card stores values under the bare field name, so the
+                          // index suffix of the storage key is stripped here.
+                          onChange={(_name, val) => updateSibling(index, field.name, val)}
                           language={language}
                         />
                       );

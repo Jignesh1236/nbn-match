@@ -7,18 +7,16 @@ export type RegistrationStatus = 'pending' | 'approved' | 'rejected' | 'banned' 
 export interface RegistrationRow {
   id: string;
   event_id: string;
-  user_id: string;
   status: RegistrationStatus;
   gender: string | null;
   candidate_code: string | null;   // e.g. M-001 or F-001
   transaction_id: string | null;
-  notes: string | null;
+  admin_note: string | null;
   created_at: string;
-  updated_at: string | null;
+  /** Submitted form data (JSONB) — holds fullName, phone, religion, etc. */
+  form_data?: Record<string, unknown>;
   /** Optional denormalised fields used for the admin list. */
-  event_code?: string;
-  event_date?: string;
-  participant_name?: string;   // derived from auth.users profile if needed
+  participant_name?: string;   // derived from form_data if present
 }
 
 /** Values that an admin can write back (approve/reject/ban/delete). */
@@ -54,15 +52,13 @@ export async function listRegistrations(
   let query = supabase.from('registrations').select(`
     id,
     event_id,
-    user_id,
     status,
     gender,
     candidate_code,
     transaction_id,
-    notes,
+    admin_note,
     created_at,
-    updated_at,
-    event (event_code, date)
+    form_data
   `);
 
   if (filters?.event_id) {

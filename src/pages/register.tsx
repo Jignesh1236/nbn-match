@@ -206,7 +206,7 @@ function RegistrationForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
-  const [siblings, setSiblings] = useState<Record<string, string>[]>([{}]);
+  const [siblings, setSiblings] = useState<Record<string, string>[]>([]);
   const [consent, setConsent] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [transactionId, setTransactionId] = useState('');

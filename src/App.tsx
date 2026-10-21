@@ -16,6 +16,7 @@ const AdminPage = lazy(() => import('@/admin/AdminPage'));
 // Loaded only when <Outlet /> inside the guard renders it, so no admin module
 // is fetched before the credentials + MFA checks pass.
 const AdminDashboard = lazy(() => import('@/admin/AdminDashboard'));
+const RegistrationsManager = lazy(() => import('@/admin/RegistrationsManager'));
 
 function Router() {
   const location = useLocation();
@@ -41,6 +42,7 @@ function Router() {
               only renders <Outlet /> (the dashboard) once the guard passes. */}
           <Route path={adminPath} element={<AdminPage />}>
             <Route index element={<AdminDashboard />} />
+            <Route path='registrations' element={<RegistrationsManager />} />
           </Route>
           <Route path='*' element={<NotFound />} />
         </Routes>

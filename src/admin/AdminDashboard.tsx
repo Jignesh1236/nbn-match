@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAdminAuth } from './auth/AdminAuthContext';
+import { EventsManager } from './EventsManager';
 
 /**
  * Admin dashboard.
@@ -43,21 +43,14 @@ export default function AdminDashboard() {
         </button>
       </header>
 
-      <main className='mx-auto max-w-3xl px-6 py-8'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Event management</CardTitle>
-            <CardDescription>
-              Creating and editing events, and reviewing registrations, will be added here.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className='text-sm text-muted-foreground'>
-              This area is only reachable after signing in, passing the is_admin() check, and
-              completing two-factor verification.
-            </p>
-          </CardContent>
-        </Card>
+      <main className='mx-auto max-w-3xl space-y-6 px-6 py-8'>
+        <div>
+          <h2 className='text-lg font-semibold tracking-tight'>Event management</h2>
+          <p className='text-sm text-muted-foreground'>
+            Registration review will be added here next.
+          </p>
+        </div>
+        <EventsManager />
       </main>
     </div>
   );

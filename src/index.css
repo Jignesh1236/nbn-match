@@ -467,6 +467,110 @@ button { user-select: none; -webkit-user-select: none; }
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
+/* ─── Admin panel theme (light, monospace) ───────────────────────────────────
+   Scoped to .admin-shell so the public site is completely unaffected.
+   Tokens map to the OpenCode brand: Berkeley Mono stack, neutral grays,
+   crisp white surfaces, near-black text. WCAG 2.2 AA contrast throughout.
+──────────────────────────────────────────────────────────────────────────── */
+.admin-shell {
+  /* Surfaces */
+  --background:   0 0% 98%;      /* #fafafa — page bg */
+  --card:         0 0% 100%;     /* #ffffff — card / panel */
+  --card-border:  0 0% 88%;      /* #e0e0e0 */
+  --popover:      0 0% 100%;
+  --popover-border: 0 0% 88%;
+
+  /* Text */
+  --foreground:        0 0% 8%;   /* #141414 — primary text */
+  --card-foreground:   0 0% 8%;
+  --popover-foreground: 0 0% 8%;
+  --muted:             0 0% 94%;  /* #f0f0f0 — muted bg */
+  --muted-foreground:  0 0% 40%;  /* #666 — secondary text */
+
+  /* Borders & inputs */
+  --border: 0 0% 85%;            /* #d9d9d9 */
+  --input:  0 0% 85%;
+  --ring:   339 79% 53%;            /* pink focus ring */
+
+  /* Primary action — brand pink */
+  --primary:            339 79% 53%;  /* #e8265e — matches public site primary */
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary / ghost */
+  --secondary:            339 30% 95%;
+  --secondary-foreground: 339 60% 25%;
+
+  /* Accent (subtle pink highlight) */
+  --accent:            339 40% 92%;
+  --accent-foreground: 339 60% 25%;
+
+  /* Destructive */
+  --destructive:            0 72% 44%;  /* #c0392b */
+  --destructive-foreground: 0 0% 100%;
+
+  /* Sidebar (pink-tinted in light admin) */
+  --sidebar:                  339 30% 97%;
+  --sidebar-foreground:       0 0% 8%;
+  --sidebar-border:           339 20% 88%;
+  --sidebar-primary:          339 79% 53%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent:           339 40% 92%;
+  --sidebar-accent-foreground: 339 60% 25%;
+  --sidebar-ring:             339 79% 53%;
+
+  /* Typography — Berkeley Mono stack */
+  --app-font-sans: 'Berkeley Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular,
+    Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --app-font-mono: 'Berkeley Mono', 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Geometry */
+  --radius: 0.375rem;  /* 6px — tighter than the public site's 12px */
+
+  /* Elevation overlays (light mode) */
+  --elevate-1: rgba(0, 0, 0, 0.03);
+  --elevate-2: rgba(0, 0, 0, 0.07);
+
+  /* Force light color-scheme so browser chrome (scrollbars, inputs) matches */
+  color-scheme: light;
+
+  font-family: var(--app-font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Focus ring — brand pink, keyboard-first */
+.admin-shell :focus-visible {
+  outline: 2px solid hsl(339 79% 53%);
+  outline-offset: 2px;
+}
+
+/* Scrollbar — subtle in light mode */
+.admin-shell ::-webkit-scrollbar       { width: 6px; height: 6px; }
+.admin-shell ::-webkit-scrollbar-track { background: hsl(var(--muted)); }
+.admin-shell ::-webkit-scrollbar-thumb { background: hsl(0 0% 72%); border-radius: 3px; }
+.admin-shell ::-webkit-scrollbar-thumb:hover { background: hsl(0 0% 55%); }
+
+/* Material Symbols — admin only */
+.admin-shell .icon {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  vertical-align: middle;
+  user-select: none;
+}
+.admin-shell .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+
 /**
  * Using the elevate system.
  * Automatic contrast adjustment.

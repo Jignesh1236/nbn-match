@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   const adminPath = import.meta.env.VITE_ADMIN_PATH || '/nbn-admin';
 
   return (
-    <div className='min-h-screen bg-background text-foreground'>
+    <div className='admin-shell min-h-screen bg-background text-foreground'>
       <header className='flex items-center justify-between gap-4 border-b border-border px-6 py-4'>
         <div>
           <h1 className='text-base font-semibold tracking-tight'>NBN Admin</h1>
@@ -39,16 +39,18 @@ export default function AdminDashboard() {
         <nav className='flex items-center gap-3'>
           <Link
             to={`${adminPath}/registrations`}
-            className='rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium shadow-sm transition-opacity hover:opacity-90'
+            className='flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium shadow-sm transition-opacity hover:opacity-90'
           >
+            <span className='icon' style={{ fontSize: 16 }}>list_alt</span>
             Registrations
           </Link>
           <button
             type='button'
             onClick={() => void signOut()}
             disabled={busy}
-            className='rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'
+            className='flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'
           >
+            <span className='icon' style={{ fontSize: 16 }}>logout</span>
             {busy ? 'Signing out…' : 'Log out'}
           </button>
         </nav>

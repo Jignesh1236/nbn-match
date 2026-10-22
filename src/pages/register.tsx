@@ -182,7 +182,28 @@ function FilePicker({
   );
 }
 
-function RegistrationForm() {
+/** Parse "18-40" or "30-50" or "40-60+" → { min, max } where max=Infinity for "+" */
+function parseAgeRange(range: string): { min: number; max: number } | null {
+  const match = range.trim().match(/^(\d+)[-–](\d+)(\+?)$/);
+  if (!match) return null;
+  const min = parseInt(match[1], 10);
+  const max = match[3] === '+' ? Infinity : parseInt(match[2], 10);
+  return { min, max };
+}
+
+/** Calculate age in years from a YYYY-MM-DD string */
+function calcAge(birthDate: string): number | null {
+  if (!birthDate) return null;
+  const dob = new Date(birthDate);
+  if (isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
+
+
   const { language } = useLanguage();
   const text = registrationLabels[language];
   const [step, setStep] = useState(0);
@@ -258,6 +279,13 @@ function RegistrationForm() {
     });
     if (step === 0 && values.phone && !/^[+\d][\d\s()-]{6,}$/.test(values.phone)) next.phone = text.phoneError;
     if (step === 0 && values.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email)) next.email = text.emailError;
+    if (step === 0 && values.birthDate && event?.age_range) {
+      const range = parseAgeRange(event.age_range);
+      const age = calcAge(values.birthDate);
+      if (range && age !== null && (age < range.min || age > range.max)) {
+        next.birthDate = text.ageRangeError;
+      }
+    }
     if (step === 1) {
       // A half-filled sibling entry is an error; a completely empty one is just an unused card.
       Object.assign(next, validateSiblings(siblings, text.requiredError));
@@ -382,6 +410,9 @@ function RegistrationForm() {
               <span style={{ marginLeft: 16, color: '#75616a' }}>{text.priceLabel} {event.price}</span>
               {event.discount_price > 0 && (
                 <span style={{ marginLeft: 12, color: '#2e7d5b' }}>{text.discountPriceLabel} {event.discount_price}</span>
+              )}
+              {event.age_range && (
+                <span style={{ marginLeft: 12, color: '#75616a' }}>{text.ageRangeLabel}: <strong style={{ color: '#5d3446' }}>{event.age_range}</strong></span>
               )}
             </div>
           ) : (

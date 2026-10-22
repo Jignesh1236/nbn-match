@@ -54,7 +54,21 @@ export async function uploadDocument(file: File): Promise<string> {
   const path = `registrations/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from('registration-files')
-    .upload(path, file, { contentType: file.type, upsert: false });
+    .upload(
+      path,
+      file,
+      {
+        // The anon bucket policy (`anon upload registration files only` in
+        // supabase/migrations/002_storage.sql) gates image/* uploads on the
+        // `metadata->>'mimetype'` column, which is populated from the `metadata`
+        // form field, NOT from the raw `contentType` form/header field. supabase-js
+        // v2's FileOptions maps `contentType` to the Content-Type header and does
+        // not apply it to Blob/File bodies — so the browser's own file type would
+        // never reach the policy check. Pass it explicitly via `metadata`.
+        metadata: { mimetype: file.type },
+        upsert: false,
+      },
+    );
   if (error) throw error;
   return path;
 }

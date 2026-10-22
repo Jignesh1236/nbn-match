@@ -339,6 +339,8 @@ function RegistrationForm() {
         ? text.eventClosedError
         : message.includes('maximum')
         ? text.eventFullError
+        : message.includes('23505') || (err as { code?: string })?.code === '23505'
+        ? text.duplicateTransactionError
         : text.submitFailedError;
       setSubmitError(friendly);
       setSubmitting(false);

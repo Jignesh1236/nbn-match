@@ -203,7 +203,7 @@ function calcAge(birthDate: string): number | null {
   return age;
 }
 
-
+function RegistrationForm() {
   const { language } = useLanguage();
   const text = registrationLabels[language];
   const [step, setStep] = useState(0);

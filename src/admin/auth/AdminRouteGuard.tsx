@@ -22,7 +22,7 @@ export function AdminRouteGuard() {
   switch (status) {
     case 'loading':
       return (
-        <div className='flex min-h-screen items-center justify-center bg-background'>
+        <div className='admin-shell flex min-h-screen items-center justify-center bg-background'>
           <p className='text-sm text-muted-foreground'>Checking credentials…</p>
         </div>
       );

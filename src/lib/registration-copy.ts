@@ -73,7 +73,7 @@ export const registrationSections: {
       { name: 'education', label: text('শিক্ষাগত যোগ্যতা', 'Education') },
       { name: 'profession', label: text('পেশা / পেশা', 'Profession') },
       { name: 'occupation', label: text('পেশা', 'Occupation') },
-      { name: 'monthlySalary', label: text('মাসিক বেতন', 'Monthly Salary'), badge: 'PRIVATE', placeholder: text('যেমন: ৫০,০০০', 'e.g. 50,000') },
+      { name: 'monthlySalary', label: text('মাসিক আয়', 'Monthly Salary / Income'), badge: 'PRIVATE', placeholder: text('যেমন: ৫০,০০০', 'e.g. 50,000') },
       { name: 'professionalDetails', label: text('পেশাগত বিবরণ', 'Professional details'), full: true },
       { name: 'workInstituteName', label: text('কामের প্রতিষ্ঠানের নাম', 'Work Institute Name'), badge: 'PRIVATE', placeholder: text('যেমন: গুগল বা ফ্রিল্যান্স', 'e.g. Google or Freelance') },
       { name: 'workStationCategory', label: text('কামের স্টেশন ক্যাটাগরি', 'Work Station Category'), placeholder: text('যেমন: হাসপাতাল, ব্যাংক', 'e.g. Hospital, Bank') },

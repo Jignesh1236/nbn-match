@@ -60,6 +60,10 @@ export const registrationSections: {
       { name: 'educationInstituteName', label: text('শিক্ষা প্রতিষ্ঠানের নাম', 'Education Institute Name'), placeholder: text('যেমন: ঢাকা বিশ্ববিদ্যালয়', 'e.g. University of Dhaka') },
       { name: 'phone', label: text('মোবাইল নম্বর (WhatsApp)', 'Phone number (WhatsApp)'), type: 'tel', required: true, badge: 'PRIVATE', placeholder: text('যেমন: ০১৭১২৩৪৫৬৭৮৯', 'e.g. +880 1XXXXXXXXX') },
       { name: 'email', label: text('ইমেইল', 'Email'), type: 'email', badge: 'PRIVATE', placeholder: text('আপনার ইমেইল ঠিকানা', 'Your email address') },
+      { name: 'guardianName', label: text('অভিভাবকের নাম', 'Guardian’s Name'), badge: 'PRIVATE', placeholder: text('অভিভাবকের পুরো নাম লিখুন', "Enter guardian's full name") },
+      { name: 'guardianRelation', label: text('অভিভাবকের সাথে সম্পর্ক', 'Relationship to Guardian'), badge: 'PRIVATE', type: 'select', options: [selectPrompt, option('father', 'পিতা', 'Father'), option('mother', 'মাতা', 'Mother'), option('brother', 'ভাই', 'Brother'), option('sister', 'বোন', 'Sister'), option('other', 'অন্যান্য', 'Other')] },
+      { name: 'guardianPhone', label: text('অভিভাবকের WhatsApp নম্বর', "Guardian's WhatsApp Number"), badge: 'PRIVATE', type: 'tel', placeholder: text('যেমন: ০১৭১২৩৪৫৬৭৮৯', 'e.g. +880 1XXXXXXXXX') },
+      { name: 'guardianAge', label: text('অভিভাবকের বয়স', "Guardian's Age"), badge: 'PRIVATE', type: 'number', placeholder: text('যেমন: ৫৫', 'e.g. 55') },
       { name: 'country', label: text('দেশ', 'Country'), required: true, placeholder: text('দেশের নাম', 'Country name') },
       { name: 'city', label: text('শহর / জেলা', 'City / district'), required: true, placeholder: text('শহর বা জেলার নাম', 'City or district') },
       { name: 'presentHouseRoad',  label: text('বাড়ি / রাস্তা', 'House / Road'), badge: 'PRIVATE', placeholder: text('বাড়ি নম্বর ও রাস্তার নাম', 'House no. and road name') },
@@ -70,9 +74,7 @@ export const registrationSections: {
       { name: 'permanentThana',    label: text('থানা / উপজেলা', 'Thana / Upazila'), badge: 'PRIVATE', placeholder: text('থানার নাম', 'Thana name') },
       { name: 'permanentDistrict', label: text('জেলা', 'District'), badge: 'PRIVATE', placeholder: text('জেলার নাম', 'District name') },
       { name: 'permanentDivision', label: text('বিভাগ', 'Division'), badge: 'PRIVATE', type: 'select', options: divisionOptions },
-      { name: 'education', label: text('শিক্ষাগত যোগ্যতা', 'Education') },
-      { name: 'profession', label: text('পেশা / পেশা', 'Profession') },
-      { name: 'occupation', label: text('পেশা', 'Occupation') },
+      { name: 'profession', label: text('পেশা', 'Profession') },
       { name: 'monthlySalary', label: text('মাসিক আয়', 'Monthly Salary / Income'), badge: 'PRIVATE', placeholder: text('যেমন: ৫০,০০০', 'e.g. 50,000') },
       { name: 'professionalDetails', label: text('পেশাগত বিবরণ', 'Professional details'), full: true },
       { name: 'workInstituteName', label: text('কामের প্রতিষ্ঠানের নাম', 'Work Institute Name'), badge: 'PRIVATE', placeholder: text('যেমন: গুগল বা ফ্রিল্যান্স', 'e.g. Google or Freelance') },
@@ -83,10 +85,12 @@ export const registrationSections: {
     title: text('পারিবারিক পরিচিতি', 'Family background'),
     subtitle: text('আপনার পরিবারের প্রাসঙ্গিক তথ্য শেয়ার করুন।', 'Share relevant details about your family.'),
     fields: [
-      { name: 'fatherName', label: text('পিতার নাম', 'Father’s name'), badge: 'PRIVATE' },
+      { name: 'fatherName', label: text('পিতার নাম', 'Father’s name'), badge: 'PRIVATE', placeholder: text('মোঃ আবদুর রহিম / মৃত মোঃ আবদুর রহিম', 'Md. Abdur Rahim / Late Md. Abdur Rahim') },
       { name: 'fatherOccupation', label: text('পিতার পেশা', 'Father’s occupation') },
-      { name: 'motherName', label: text('মাতার নাম', 'Mother’s name'), badge: 'PRIVATE' },
+      { name: 'fatherPhone', label: text('পিতার ফোন নম্বর', "Father's Phone Number"), badge: 'PRIVATE', type: 'tel', placeholder: text('যেমন: ০১৭১২৩৪৫৬৭৮৯', 'e.g. +880 1XXXXXXXXX') },
+      { name: 'motherName', label: text('মাতার নাম', 'Mother’s name'), badge: 'PRIVATE', placeholder: text('রহিমা / মৃত রহিমা', 'Rahima / Late Rahima') },
       { name: 'motherOccupation', label: text('মাতার পেশা', 'Mother’s occupation') },
+      { name: 'motherPhone', label: text('মাতার ফোন নম্বর', "Mother's Phone Number"), badge: 'PRIVATE', type: 'tel', placeholder: text('যেমন: ০১৭১২৩৪৫৬৭৮৯', 'e.g. +880 1XXXXXXXXX') },
       { name: 'familyBackground', label: text('পারিবারিক পরিচিতি', 'Family details'), full: true },
     ],
   },
@@ -103,6 +107,7 @@ export const registrationSections: {
       { name: 'preferences', label: text('অন্যান্য পছন্দ বা গুরুত্বপূর্ণ বিষয়', 'Other preferences or important details'), full: true, type: 'textarea' },
       { name: 'videoCallOverseas', label: text('বিদেশে ভিডিও কলের জন্য উপলব্ধ?', 'Available for Video Call (Overseas)?'), type: 'select', options: yesNoOptions },
       { name: 'committedToFitness', label: text('ফিটনেসের প্রতি প্রতিবদ্ধ?', 'Committed to Fitness?'), type: 'select', options: yesNoOptions },
+      { name: 'healthConditions', label: text('শারীরিক বা মানসিক স্বাস্থ্য সমস্যা', 'Physical or Mental Health Conditions'), full: true, type: 'textarea', placeholder: text('আপনার কোনো শারীরিক বা মানসিক স্বাস্থ্য সমস্যা আছে বলুন', 'Please state if you have any physical or mental health conditions...') },
       { name: 'readyForMarriage3Months', label: text('৩ মাসের মধ্যে বিয়েতে প্রস্তুত?', 'Ready for Marriage within 3 months?'), type: 'select', options: yesNoOptions },
       { name: 'praySalatRegularly', label: text('নিয়মিত সালাত পড়েন?', 'Pray Salat regularly?'), type: 'select', options: yesNoOptions },
       { name: 'wearNiqabHijab', label: text('নিকাব / হিজাব পরেন?', 'Wear Niqab/Hijab?'), type: 'select', options: yesNoOptions },
@@ -142,6 +147,7 @@ export const siblingFields: RegistrationFieldDefinition[] = [
   { name: 'siblingName', label: text('ভাই-বোনের নাম', "Sibling's Name"), badge: 'PRIVATE', placeholder: text('নাম লিখুন', 'Enter name') },
   { name: 'siblingOccupation', label: text('পেশা', 'Occupation'), placeholder: text('যেমন: ডাক্টর, ইঞ্জিনিয়ার', 'e.g. Doctor, Engineer') },
   { name: 'siblingMaritalStatus', label: text('বিবাহের অবস্থান', 'Marital Status'), type: 'select', options: siblingMaritalStatusOptions },
+  { name: 'spouseOccupation', label: text('স্বামী/স্ত্রীর পেশা', 'Spouse Occupation'), placeholder: text('যেমন: ডাক্টর, ইঞ্জিনিয়ার', 'e.g. Doctor, Engineer') },
 ];
 
 export const requiredByStep: Record<number, string[]> = {
@@ -298,3 +304,5 @@ export function getRegistrationValueLabel(name: string, value: string, language:
     .find((candidate) => candidate.name === name);
   return field?.options?.find((candidate) => candidate.value === value)?.label[language] ?? value;
 }
+
+

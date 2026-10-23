@@ -27,6 +27,8 @@ export type RegistrationInput = {
   guardian_age?: number | null;
   guardian_relation?: string | null;
   guardian_charge?: number;
+  father_phone?: string | null;
+  mother_phone?: string | null;
   form_data: Record<string, unknown>;
 };
 
@@ -92,6 +94,8 @@ export async function submitRegistration(input: RegistrationInput): Promise<void
     guardian_age: input.guardian_age ?? null,
     guardian_relation: input.guardian_relation ?? null,
     guardian_charge: input.guardian_charge ?? 0,
+    father_phone: input.father_phone ?? null,
+    mother_phone: input.mother_phone ?? null,
     status: 'pending',
     candidate_code: null,
     admin_note: null,

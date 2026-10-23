@@ -345,6 +345,8 @@ function RegistrationForm() {
         guardian_age: values.guardianAge ? Number(values.guardianAge) : null,
         guardian_relation: values.guardianRelation || null,
         guardian_charge: 0,
+        father_phone: values.fatherPhone || null,
+        mother_phone: values.motherPhone || null,
         form_data: {
           ...values,
           // Siblings are stored under their bare field names so the admin
@@ -450,16 +452,22 @@ function RegistrationForm() {
             <div className="form-grid">
               {section.fields
                 .filter(f => !['presentHouseRoad','presentThana','presentDistrict','presentDivision','permanentVillage','permanentThana','permanentDistrict','permanentDivision'].includes(f.name))
-                .map(field => (
-                <Field
-                  key={field.name}
-                  field={field}
-                  value={values[field.name] || ''}
-                  error={errors[field.name]}
-                  onChange={update}
-                  language={language}
-                />
-              ))}
+                .map(field => {
+                  // Only show health conditions textarea when committed to fitness is Yes
+                  if (field.name === 'healthConditions' && values.committedToFitness !== 'yes') {
+                    return null;
+                  }
+                  return (
+                    <Field
+                      key={field.name}
+                      field={field}
+                      value={values[field.name] || ''}
+                      error={errors[field.name]}
+                      onChange={update}
+                      language={language}
+                    />
+                  );
+                })}
               {step === 4 && memberMode && memberFields.map(field => (
                 <Field
                   key={field.name}
@@ -510,6 +518,10 @@ function RegistrationForm() {
                   <div style={{ color: '#b63861', fontWeight: 700, fontSize: '0.85rem', marginBottom: 12, marginLeft: 4 }}>{text.siblingCardLabel} {index + 1}</div>
                   <div className="form-grid" style={{ gap: '16px 12px' }}>
                     {siblingFields.map(field => {
+                      // Only show spouse occupation when the sibling is married
+                      if (field.name === 'spouseOccupation' && sibling.siblingMaritalStatus !== 'married') {
+                        return null;
+                      }
                       const fieldName = `${field.name}-${index}`;
                       return (
                         <Field

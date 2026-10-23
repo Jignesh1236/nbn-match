@@ -448,7 +448,9 @@ function RegistrationForm() {
           </div>
           {step < 5 && (
             <div className="form-grid">
-              {section.fields.map(field => (
+              {section.fields
+                .filter(f => !['presentHouseRoad','presentThana','presentDistrict','presentDivision','permanentVillage','permanentThana','permanentDistrict','permanentDivision'].includes(f.name))
+                .map(field => (
                 <Field
                   key={field.name}
                   field={field}
@@ -469,6 +471,29 @@ function RegistrationForm() {
                 />
               ))}
             </div>
+          )}
+
+          {step === 0 && (
+            <>
+              <h3 style={{ color: '#5d3446', margin: '24px 0 8px', fontSize: '1rem', fontWeight: 700 }}>{text.presentAddressHeading}</h3>
+              <div className="form-grid">
+                {['presentHouseRoad','presentThana','presentDistrict','presentDivision'].map(name => {
+                  const field = section.fields.find(f => f.name === name)!;
+                  return (
+                    <Field key={name} field={field} value={values[name] || ''} error={errors[name]} onChange={update} language={language} />
+                  );
+                })}
+              </div>
+              <h3 style={{ color: '#5d3446', margin: '24px 0 8px', fontSize: '1rem', fontWeight: 700 }}>{text.permanentAddressHeading}</h3>
+              <div className="form-grid">
+                {['permanentVillage','permanentThana','permanentDistrict','permanentDivision'].map(name => {
+                  const field = section.fields.find(f => f.name === name)!;
+                  return (
+                    <Field key={name} field={field} value={values[name] || ''} error={errors[name]} onChange={update} language={language} />
+                  );
+                })}
+              </div>
+            </>
           )}
 
           {step === 1 && (

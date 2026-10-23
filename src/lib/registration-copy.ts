@@ -19,6 +19,18 @@ const option = (value: string, bn: string, en: string): RegistrationOption => ({
   label: text(bn, en),
 });
 const selectPrompt = option('', 'নির্বাচন করুন', 'Select an option');
+
+const divisionOptions = [
+  selectPrompt,
+  option('dhaka',      'ঢাকা',        'Dhaka'),
+  option('chattogram', 'চট্টগ্রাম',   'Chattogram'),
+  option('rajshahi',   'রাজশাহী',     'Rajshahi'),
+  option('khulna',     'খুলনা',       'Khulna'),
+  option('barishal',   'বরিশাল',     'Barishal'),
+  option('sylhet',     'সিলেট',       'Sylhet'),
+  option('rangpur',    'রংপুর',      'Rangpur'),
+  option('mymensingh', 'ময়মনসিংহ',   'Mymensingh'),
+];
 const yesNoOptions = [selectPrompt, option('yes', 'হ্যাঁ', 'Yes'), option('no', 'না', 'No')];
 const siblingRelationOptions = [selectPrompt, option('brother', 'ভাই', 'Brother'), option('sister', 'বোন', 'Sister')];
 const siblingMaritalStatusOptions = [selectPrompt, option('never-married', 'কখনো বিয়ে করেননি', 'Never Married'), option('married', 'বিবাহিত', 'Married'), option('divorced', 'বিচ্ছেদ', 'Divorced'), option('widowed', 'বিধবা / বিধুর', 'Widowed')];
@@ -50,8 +62,14 @@ export const registrationSections: {
       { name: 'email', label: text('ইমেইল', 'Email'), type: 'email', badge: 'PRIVATE', placeholder: text('আপনার ইমেইল ঠিকানা', 'Your email address') },
       { name: 'country', label: text('দেশ', 'Country'), required: true, placeholder: text('দেশের নাম', 'Country name') },
       { name: 'city', label: text('শহর / জেলা', 'City / district'), required: true, placeholder: text('শহর বা জেলার নাম', 'City or district') },
-      { name: 'presentAddress', label: text('বর্তমান ঠিকানা', 'Present address'), full: true, badge: 'PRIVATE' },
-      { name: 'permanentAddress', label: text('স্থায়ী ঠিকানা', 'Permanent address'), full: true, badge: 'PRIVATE' },
+      { name: 'presentHouseRoad',  label: text('বাড়ি / রাস্তা', 'House / Road'), badge: 'PRIVATE', placeholder: text('বাড়ি নম্বর ও রাস্তার নাম', 'House no. and road name') },
+      { name: 'presentThana',      label: text('থানা / উপজেলা', 'Thana / Upazila'), badge: 'PRIVATE', placeholder: text('থানার নাম', 'Thana name') },
+      { name: 'presentDistrict',   label: text('জেলা', 'District'), badge: 'PRIVATE', placeholder: text('জেলার নাম', 'District name') },
+      { name: 'presentDivision',   label: text('বিভাগ', 'Division'), badge: 'PRIVATE', type: 'select', options: divisionOptions },
+      { name: 'permanentVillage',  label: text('গ্রাম', 'Village'), badge: 'PRIVATE', placeholder: text('গ্রামের নাম', 'Village name') },
+      { name: 'permanentThana',    label: text('থানা / উপজেলা', 'Thana / Upazila'), badge: 'PRIVATE', placeholder: text('থানার নাম', 'Thana name') },
+      { name: 'permanentDistrict', label: text('জেলা', 'District'), badge: 'PRIVATE', placeholder: text('জেলার নাম', 'District name') },
+      { name: 'permanentDivision', label: text('বিভাগ', 'Division'), badge: 'PRIVATE', type: 'select', options: divisionOptions },
       { name: 'education', label: text('শিক্ষাগত যোগ্যতা', 'Education') },
       { name: 'profession', label: text('পেশা / পেশা', 'Profession') },
       { name: 'occupation', label: text('পেশা', 'Occupation') },
@@ -190,6 +208,8 @@ export const registrationLabels = {
     senderNumberError: 'প্রেরকের নম্বর আবশ্যক।',
     ageRangeLabel: 'বয়সসীমা',
     ageRangeError: 'দুঃখিত, আপনার বয়স এই ইভেন্টের নির্ধারিত বয়সসীমার মধ্যে পড়ে না।',
+    presentAddressHeading: 'বর্তমান ঠিকানা',
+    permanentAddressHeading: 'স্থায়ী ঠিকানা',
     eventClosedError: 'দুঃখিত, এই ইভেন্টের রেজিস্ট্রেশন বন্ধ হয়ে গেছে।',
     eventFullError: 'দুঃখিত, এই ইভেন্টে সর্বোচ্চ অংশগ্রহণকারী নির্ধারিত সংখ্যা পূর্ণ হয়ে গেছে।',
     duplicateTransactionError: 'এই ট্রানজেকশন আইডি দিয়ে আগেই রেজিস্ট্রেশন হয়েছে। আপনি যদি আগে সফলভাবে জমা দিয়ে থাকেন, তাহলে আর জমা দেওয়ার প্রয়োজন নেই। অন্যথায় ভিন্ন ট্রানজেকশন আইডি ব্যবহার করুন।',
@@ -255,6 +275,8 @@ export const registrationLabels = {
     senderNumberError: 'Sender number is required.',
     ageRangeLabel: 'Age range',
     ageRangeError: 'Sorry, your age does not fall within the age range for this event.',
+    presentAddressHeading: 'Present address',
+    permanentAddressHeading: 'Permanent address',
     eventClosedError: 'Sorry, registration for this event is closed.',
     eventFullError: 'Sorry, this event has reached its maximum number of participants.',
     duplicateTransactionError: 'A registration with this transaction ID already exists. If you already submitted successfully, no further action is needed. Otherwise use a different transaction ID.',

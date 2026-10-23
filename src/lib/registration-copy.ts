@@ -46,7 +46,7 @@ export const registrationSections: {
       { name: 'children', label: text('সন্তান', 'Children'), type: 'select', options: [selectPrompt, option('none', 'কোনো নেই', 'None'), option('one', '১ জন', '1'), option('two', '২ জন', '2'), option('three', '৩ জন', '3'), option('four-plus', '৪ বা তার বেশি', '4+')] },
       { name: 'lastEducationLevel', label: text('শেষ শিক্ষাগত যোগ্যতা', 'Last Education Level'), type: 'select', options: [selectPrompt, option('phd', 'পিএইচডি', 'PhD'), option('masters', 'মাস্টার্স', "Master's"), option('bachelors', 'ব্যাচেলর্স', "Bachelor's"), option('hsc', 'এইচএসসি', 'HSC / Intermediate'), option('ssc', 'এসএসসি', 'SSC / Secondary')] },
       { name: 'educationInstituteName', label: text('শিক্ষা প্রতিষ্ঠানের নাম', 'Education Institute Name'), placeholder: text('যেমন: ঢাকা বিশ্ববিদ্যালয়', 'e.g. University of Dhaka') },
-      { name: 'phone', label: text('মোবাইল নম্বর', 'Phone number'), type: 'tel', required: true, badge: 'PRIVATE', placeholder: text('যেমন: ০১৭১২৩৪৫৬৭৮৯', 'e.g. +880 1XXXXXXXXX') },
+      { name: 'phone', label: text('মোবাইল নম্বর (WhatsApp)', 'Phone number (WhatsApp)'), type: 'tel', required: true, badge: 'PRIVATE', placeholder: text('যেমন: ০১৭১২৩৪৫৬৭৮৯', 'e.g. +880 1XXXXXXXXX') },
       { name: 'email', label: text('ইমেইল', 'Email'), type: 'email', badge: 'PRIVATE', placeholder: text('আপনার ইমেইল ঠিকানা', 'Your email address') },
       { name: 'country', label: text('দেশ', 'Country'), required: true, placeholder: text('দেশের নাম', 'Country name') },
       { name: 'city', label: text('শহর / জেলা', 'City / district'), required: true, placeholder: text('শহর বা জেলার নাম', 'City or district') },

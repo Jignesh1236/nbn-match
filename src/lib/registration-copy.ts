@@ -236,6 +236,7 @@ export const registrationLabels = {
     requiredError: 'This field is required.',
     phoneError: 'Enter a valid phone number.',
     emailError: 'Enter a valid email address.',
+    aboutSelfTooLongError: 'Word limit exceeded (maximum 100 words).',
     chooseDocuments: 'Choose documents',
     optionalDemo: '(optional)',
     uploadInstructions: 'JPG, PNG, or PDF only · Up to 5 MB each.',

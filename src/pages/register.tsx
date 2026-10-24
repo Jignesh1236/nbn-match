@@ -30,7 +30,9 @@ import {
 
 type Values = Record<string, string>;
 
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+// .jfif files are a JPEG variant — browsers may report them as image/jpeg
+// or occasionally as image/pjpeg. Accept both, plus png and pdf.
+const ACCEPTED_TYPES = ['image/jpeg', 'image/pjpeg', 'image/png', 'application/pdf'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function wordCount(text: string): number {
@@ -172,7 +174,7 @@ function FilePicker({
           {text.chooseFile}
           <input
             type="file"
-            accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+            accept=".jpg,.jpeg,.jfif,.png,.pdf,image/jpeg,image/pjpeg,image/png,application/pdf"
             onChange={e => {
               const f = e.target.files?.[0] ?? null;
               if (!f) return;

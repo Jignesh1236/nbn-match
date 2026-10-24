@@ -64,7 +64,7 @@ function Field({
     <div className={`field${field.full ? ' full' : ''}`}>
       <label htmlFor={id} style={{ display: 'block', marginBottom: 4 }}>
         {field.label[language]}
-        {field.required && <span aria-label={text.requiredAria}> *</span>}
+        {field.required && <span aria-label={text.requiredAria} />}
         {field.badge && <span className="field-badge" aria-label={field.badge}>{field.badge}</span>}
       </label>
       {field.type === 'textarea' ? (

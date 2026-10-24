@@ -74,24 +74,32 @@ export function AdminMfa({ mode }: AdminMfaProps) {
   };
 
   return (
-    <div className='admin-shell flex min-h-screen items-center justify-center bg-background px-4'>
-      <Card className='w-full max-w-md'>
-        <CardHeader>
-          <CardTitle>
-            {mode === 'setup' ? 'Set up two-factor' : 'Two-factor verification'}
+    <div className='admin-shell flex min-h-screen items-center justify-center bg-background px-4 py-8'>
+      <Card className='w-full max-w-md shadow-lg'>
+        <CardHeader className='text-center pb-2'>
+          <div className='mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10'>
+            <span className='icon text-primary' style={{ fontSize: 24 }}>
+              {mode === 'setup' ? 'qr_code_2' : 'lock'}
+            </span>
+          </div>
+          <CardTitle className='text-xl'>
+            {mode === 'setup' ? 'Set up two-factor auth' : 'Two-factor verification'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className='mt-1'>
             {mode === 'setup'
-              ? 'Scan the QR code with your authenticator app, then enter the 6-digit code it shows.'
+              ? 'Scan the QR code with Google Authenticator or any TOTP app, then enter the 6-digit code.'
               : 'Enter the 6-digit code from your authenticator app.'}
           </CardDescription>
         </CardHeader>
 
-        <CardContent className='space-y-4'>
+        <CardContent className='space-y-5 pt-2'>
           {mode === 'setup' ? (
-            <div className='space-y-3'>
+            <div className='space-y-4'>
               {enrolling ? (
-                <p className='text-sm text-muted-foreground'>Generating a QR code…</p>
+                <div className='flex flex-col items-center gap-2 py-6'>
+                  <div className='h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary' />
+                  <p className='text-sm text-muted-foreground'>Generating QR code…</p>
+                </div>
               ) : null}
 
               {enrollError ? (
@@ -104,45 +112,48 @@ export function AdminMfa({ mode }: AdminMfaProps) {
               ) : null}
 
               {enrollment ? (
-                <>
-                  {/*
-                    Primary path: render the QR SVG inline. Data-URI <img>
-                    rendering silently fails on some Supabase SVG payloads, so
-                    inline avoids the encoding question entirely. Fallback: a
-                    data-URI <img>, shown only if the inline markup somehow
-                    produced nothing.
-                  */}
-                  {inlineQr && !qrBroken ? (
-                    <div
-                      role='img'
-                      aria-label='QR code to scan with your authenticator app'
-                      className='mx-auto h-40 w-40 rounded-md border border-border bg-white p-2 [&>svg]:h-full [&>svg]:w-full'
-                      // The SVG comes from Supabase and is scrubbed in
-                      // prepareQrSvg() (no scripts, handlers or javascript: hrefs).
-                      dangerouslySetInnerHTML={{ __html: inlineQr }}
-                    />
-                  ) : (
-                    <img
-                      src={totpQrDataUrl(enrollment.qrCode)}
-                      alt='QR code to scan with your authenticator app'
-                      onError={() => setQrBroken(true)}
-                      className='mx-auto h-40 w-40 rounded-md border border-border bg-white p-2'
-                    />
-                  )}
-                  {qrBroken ? (
-                    <p role='alert' className='text-center text-xs text-muted-foreground'>
-                      The QR image would not display — please use the manual key below.
+                <div className='flex flex-col items-center gap-4'>
+                  {/* QR code centered with decorative container */}
+                  <div className='flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-muted/20 px-6 py-5 w-full text-center'>
+                    <p className='text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
+                      Scan with your authenticator app
                     </p>
-                  ) : null}
-                  <div className='space-y-1 text-center'>
+                    <div className='flex items-center justify-center w-full'>
+                      {inlineQr && !qrBroken ? (
+                        <div
+                          role='img'
+                          aria-label='QR code to scan with your authenticator app'
+                          className='h-52 w-52 rounded-lg border-2 border-border bg-white p-2 shadow-sm flex items-center justify-center [&>svg]:h-full [&>svg]:w-full'
+                          // The SVG comes from Supabase and is scrubbed in
+                          // prepareQrSvg() (no scripts, handlers or javascript: hrefs).
+                          dangerouslySetInnerHTML={{ __html: inlineQr }}
+                        />
+                      ) : (
+                        <img
+                          src={totpQrDataUrl(enrollment.qrCode)}
+                          alt='QR code to scan with your authenticator app'
+                          onError={() => setQrBroken(true)}
+                          className='h-52 w-52 rounded-lg border-2 border-border bg-white p-2 shadow-sm object-contain'
+                        />
+                      )}
+                    </div>
+                    {qrBroken ? (
+                      <p role='alert' className='text-center text-xs text-muted-foreground'>
+                        QR image failed to display — use the manual key below.
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {/* manual secret */}
+                  <div className='w-full space-y-1.5 text-center'>
                     <p className='text-xs text-muted-foreground'>
-                      Cannot scan? Enter this key manually:
+                      Cannot scan? Enter this key manually in your app:
                     </p>
-                    <p className='break-all rounded-md border border-border bg-muted px-3 py-2 font-mono text-xs text-foreground'>
+                    <p className='break-all rounded-md border border-border bg-muted px-3 py-2 font-mono text-xs text-foreground select-all'>
                       {enrollment.secret}
                     </p>
                   </div>
-                </>
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -168,7 +179,7 @@ export function AdminMfa({ mode }: AdminMfaProps) {
                 value={code}
                 onChange={(event) => setCode(event.target.value.replace(/[^0-9]/g, ''))}
                 placeholder='123456'
-                className='w-full rounded-md border border-input bg-background px-3 py-2 text-center font-mono text-base tracking-[0.5em] text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                className='w-full rounded-md border border-input bg-background px-3 py-2.5 text-center font-mono text-lg tracking-[0.6em] text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring'
               />
             </div>
 
@@ -184,9 +195,9 @@ export function AdminMfa({ mode }: AdminMfaProps) {
             <button
               type='submit'
               disabled={!canSubmit}
-              className='w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'
+              className='w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'
             >
-              {busy ? 'Verifying…' : 'Verify and continue'}
+              {busy ? 'Verifying…' : 'Verify and continue →'}
             </button>
           </form>
         </CardContent>

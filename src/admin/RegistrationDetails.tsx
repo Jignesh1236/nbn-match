@@ -45,7 +45,7 @@ function DocViewer({ path, label }: { path: string; label: string }) {
     }
   };
 
-  const isImage = /\.(jpe?g|png)$/i.test(path);
+  const isImage = /\.(jpe?g|jfif|png)$/i.test(path);
 
   return (
     <div className='rounded border border-border bg-muted/20 p-3'>
@@ -212,8 +212,8 @@ function renderField(language: Language, name: string, value: unknown): JSX.Elem
       ? getRegistrationValueLabel(name, value, language)
       : String(value);
   return (
-    <div key={name} className='grid grid-cols-2 gap-4 rounded border border-border/50 bg-muted/30 px-3 py-2'>
-      <span className='text-xs font-medium text-muted-foreground'>{label}</span>
+    <div key={name} className='grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-4 rounded-lg border border-border/50 bg-muted/20 px-3 py-2'>
+      <span className='text-xs font-semibold text-muted-foreground'>{label}</span>
       <span className='break-words text-sm text-foreground'>{display}</span>
     </div>
   );
@@ -263,22 +263,22 @@ export function RegistrationDetails({
   const fd = (registration.form_data ?? {}) as Record<string, unknown>;
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center'>
-      <div className='absolute inset-0 bg-black/50 backdrop-blur-sm' onClick={onClose} />
+    <div className='fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4'>
+      <div className='fixed inset-0 bg-black/60 backdrop-blur-xs' onClick={onClose} />
       <div
-        className='relative flex w-full max-w-3xl flex-col max-h-[92vh] overflow-hidden rounded-xl border border-border bg-card shadow-2xl'
+        className='relative flex w-full max-w-3xl flex-col h-[94vh] sm:h-auto sm:max-h-[90vh] overflow-hidden rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl'
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── header ── */}
-        <div className='flex items-start justify-between gap-4 border-b border-border px-6 py-4'>
+        <div className='flex items-start justify-between gap-4 border-b border-border px-4 py-3 sm:px-6 sm:py-4'>
           <div>
-            <h2 className='text-base font-semibold text-foreground'>Registration Details</h2>
+            <h2 className='text-base font-bold text-foreground'>Registration Details</h2>
             <div className='mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
-              <span className={`rounded-full border px-2 py-0.5 font-medium ${STATUS_STYLE[registration.status]}`}>
+              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLE[registration.status]}`}>
                 {registration.status}
               </span>
               {registration.candidate_code && (
-                <span className='font-mono'>Code: {registration.candidate_code}</span>
+                <span className='font-mono font-bold text-foreground'>Code: {registration.candidate_code}</span>
               )}
               {registration.transaction_id && (
                 <span className='font-mono'>Txn: {registration.transaction_id}</span>
@@ -286,13 +286,18 @@ export function RegistrationDetails({
               <span className='text-muted-foreground capitalize'>{registration.gender ?? ''}</span>
             </div>
           </div>
-          <button type='button' onClick={onClose} className='rounded-md border border-border px-3 py-1 text-sm hover:bg-muted'>
-            ✕
+          <button
+            type='button'
+            onClick={onClose}
+            className='rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground'
+            aria-label='Close'
+          >
+            <span className='icon' style={{ fontSize: 18 }}>close</span>
           </button>
         </div>
 
         {/* ── scrollable body ── */}
-        <div className='flex-1 space-y-1 overflow-y-auto px-6 py-4'>
+        <div className='flex-1 space-y-1 overflow-y-auto px-4 py-3 sm:px-6 sm:py-4'>
           {renderSection(language, 'Personal & contact',      registrationSections[0]?.fields ?? [], fd)}
           {renderSection(language, 'Family background',       registrationSections[1]?.fields ?? [], fd)}
           {renderSection(language, 'Preferences & lifestyle', registrationSections[2]?.fields ?? [], fd)}
@@ -362,42 +367,44 @@ export function RegistrationDetails({
         </div>
 
         {/* ── action + export footer ── */}
-        <div className='flex flex-wrap items-center gap-2 border-t border-border px-6 py-4'>
+        <div className='flex flex-wrap items-center justify-between gap-2.5 border-t border-border px-4 py-3 sm:px-6 sm:py-4'>
           {/* action buttons */}
-          {onAction && registration.status === 'pending' && (
-            <>
-              <button
-                type='button'
-                onClick={() => onAction('approve')}
-                className='rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700'
-              >
-                Approve
-              </button>
-              <button
-                type='button'
-                onClick={() => onAction('reject')}
-                className='rounded-md bg-orange-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-600'
-              >
-                Reject
-              </button>
-            </>
-          )}
+          <div className='flex flex-wrap items-center gap-2'>
+            {onAction && registration.status === 'pending' && (
+              <>
+                <button
+                  type='button'
+                  onClick={() => onAction('approve')}
+                  className='rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700'
+                >
+                  Approve
+                </button>
+                <button
+                  type='button'
+                  onClick={() => onAction('reject')}
+                  className='rounded-lg bg-amber-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-amber-700'
+                >
+                  Reject
+                </button>
+              </>
+            )}
+          </div>
 
           {/* export buttons */}
-          <div className='ml-auto flex items-center gap-2'>
-            <span className='text-xs text-muted-foreground'>Export:</span>
+          <div className='flex flex-wrap items-center gap-2'>
+            <span className='hidden sm:inline text-xs text-muted-foreground'>Export:</span>
             <button
               type='button'
               onClick={() => exportOneFull(registration, eventCode)}
-              className='rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-muted'
+              className='rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium hover:bg-muted'
               title='Download all fields including private data'
             >
-              📥 With Private
+              📥 Full
             </button>
             <button
               type='button'
               onClick={() => exportOnePublic(registration, eventCode)}
-              className='rounded-md border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 hover:bg-green-100'
+              className='rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700'
               title='Download public fields only — safe to share'
             >
               📤 Public Only

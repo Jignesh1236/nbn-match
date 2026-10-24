@@ -223,6 +223,7 @@ function RegistrationForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
+  const [accompanyingNidFile, setAccompanyingNidFile] = useState<File | null>(null);
   const [siblings, setSiblings] = useState<Record<string, string>[]>([]);
   const [consent, setConsent] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -334,6 +335,9 @@ function RegistrationForm() {
     if (!transactionId.trim()) paymentErrors.transactionId = text.transactionIdError;
     if (!senderNumber.trim()) paymentErrors.senderNumber = text.senderNumberError;
     if (!consent) paymentErrors.consent = text.consentError;
+    if (!photoFile) paymentErrors.photoRequired = text.requiredError;
+    if (!idCardFile) paymentErrors.idCardRequired = text.requiredError;
+    if (!accompanyingNidFile) paymentErrors.accompanyingNidRequired = text.requiredError;
     if (Object.keys(paymentErrors).length > 0) {
       setErrors(old => ({ ...old, ...paymentErrors }));
       return;
@@ -343,8 +347,9 @@ function RegistrationForm() {
     setSubmitError(null);
 
     try {
-      const photoPath = photoFile ? await uploadDocument(photoFile) : null;
-      const idCardPath = idCardFile ? await uploadDocument(idCardFile) : null;
+      const photoPath = await uploadDocument(photoFile!);
+      const idCardPath = await uploadDocument(idCardFile!);
+      const accompanyingNidPath = await uploadDocument(accompanyingNidFile!);
 
       const input: RegistrationInput = {
         event_id: event.id,
@@ -352,6 +357,7 @@ function RegistrationForm() {
         private_fields: collectPrivateFieldNames(siblings.length),
         photo_path: photoPath,
         id_card_path: idCardPath,
+        accompanying_nid_path: accompanyingNidPath,
         payment_method: paymentMethod,
         transaction_id: transactionId.trim(),
         sender_number: senderNumber.trim(),
@@ -369,6 +375,7 @@ function RegistrationForm() {
           siblings: serializeSiblings(siblings),
           photo: photoFile?.name ?? null,
           idCard: idCardFile?.name ?? null,
+          accompanyingNid: accompanyingNidFile?.name ?? null,
           paymentMethod,
           transactionId: transactionId.trim(),
           senderNumber: senderNumber.trim(),
@@ -584,6 +591,13 @@ function RegistrationForm() {
                   file={idCardFile}
                   onChange={setIdCardFile}
                   onRemove={() => setIdCardFile(null)}
+                  language={language}
+                />
+                <FilePicker
+                  label={text.accompanyingNidLabel}
+                  file={accompanyingNidFile}
+                  onChange={setAccompanyingNidFile}
+                  onRemove={() => setAccompanyingNidFile(null)}
                   language={language}
                 />
               </div>

@@ -6,3 +6,4 @@
 
 alter table public.registrations add column if not exists father_phone text;
 alter table public.registrations add column if not exists mother_phone text;
+alter table public.registrations add column if not exists accompanying_nid_path text;

@@ -19,6 +19,7 @@ export type RegistrationInput = {
   private_fields: string[];
   photo_path?: string | null;
   id_card_path?: string | null;
+  accompanying_nid_path?: string | null;
   payment_method?: string | null;
   transaction_id?: string | null;
   sender_number?: string | null;
@@ -86,6 +87,7 @@ export async function submitRegistration(input: RegistrationInput): Promise<void
     private_fields: input.private_fields,
     photo_path: input.photo_path ?? null,
     id_card_path: input.id_card_path ?? null,
+    accompanying_nid_path: input.accompanying_nid_path ?? null,
     payment_method: input.payment_method ?? null,
     transaction_id: input.transaction_id ?? null,
     sender_number: input.sender_number ?? null,

@@ -74,7 +74,7 @@ function Field({
             value={value || ''}
             placeholder={field.placeholder?.[language]}
             onChange={e => onChange(name, e.target.value)}
-            aria-invalid={!!error || (field.maxWords && wordCount(value) > field.maxWords)}
+            aria-invalid={!!error || (field.maxWords ? wordCount(value) > field.maxWords : false)}
             aria-describedby={error ? `${id}-error` : undefined}
             data-testid={`input-${idPrefix}${field.name}`}
           />

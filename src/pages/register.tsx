@@ -331,7 +331,7 @@ function RegistrationForm() {
     }
 
     const paymentErrors: Record<string, string> = {};
-    if (paymentMethod !== 'bkash' && paymentMethod !== 'nagad') paymentErrors.paymentMethod = text.paymentMethodError;
+    if (paymentMethod !== 'bkash' && paymentMethod !== 'nagad' && paymentMethod !== 'rocket' && paymentMethod !== 'khalti') paymentErrors.paymentMethod = text.paymentMethodError;
     if (!transactionId.trim()) paymentErrors.transactionId = text.transactionIdError;
     if (!senderNumber.trim()) paymentErrors.senderNumber = text.senderNumberError;
     if (!consent) paymentErrors.consent = text.consentError;

@@ -359,7 +359,7 @@ function RegistrationForm() {
         guardian_phone: values.guardianPhone || null,
         guardian_age: values.guardianAge ? Number(values.guardianAge) : null,
         guardian_relation: values.guardianRelation || null,
-        guardian_charge: 0,
+        guardian_charge: values.videoCallOverseas === 'yes' ? event?.extra_guardian_charge ?? 0 : 0,
         father_phone: values.fatherPhone || null,
         mother_phone: values.motherPhone || null,
         form_data: {
@@ -427,6 +427,9 @@ function RegistrationForm() {
               <span style={{ marginLeft: 16, color: '#75616a' }}>{text.priceLabel} {event.price}</span>
               {event.discount_price > 0 && (
                 <span style={{ marginLeft: 12, color: '#2e7d5b' }}>{text.discountPriceLabel} {event.discount_price}</span>
+              )}
+              {values.videoCallOverseas === 'yes' && event.extra_guardian_charge && (
+                <span style={{ marginLeft: 12, color: '#2e7d5b' }}>{text.overseasFeeLabel} {event.extra_guardian_charge}</span>
               )}
               {event.age_range && (
                 <span style={{ marginLeft: 12, color: '#75616a' }}>{text.ageRangeLabel}: <strong style={{ color: '#5d3446' }}>{event.age_range}</strong></span>

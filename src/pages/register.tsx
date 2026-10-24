@@ -33,6 +33,11 @@ type Values = Record<string, string>;
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
+function wordCount(text: string): number {
+  if (!text?.trim()) return 0;
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
 function Field({
   field,
   fieldName,
@@ -63,15 +68,22 @@ function Field({
         {field.badge && <span className="field-badge" aria-label={field.badge}>{field.badge}</span>}
       </label>
       {field.type === 'textarea' ? (
-        <textarea
-          id={id}
-          value={value || ''}
-          placeholder={field.placeholder?.[language]}
-          onChange={e => onChange(name, e.target.value)}
-          aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : undefined}
-          data-testid={`input-${idPrefix}${field.name}`}
-        />
+        <>
+          <textarea
+            id={id}
+            value={value || ''}
+            placeholder={field.placeholder?.[language]}
+            onChange={e => onChange(name, e.target.value)}
+            aria-invalid={!!error || (field.maxWords && wordCount(value) > field.maxWords)}
+            aria-describedby={error ? `${id}-error` : undefined}
+            data-testid={`input-${idPrefix}${field.name}`}
+          />
+          {field.maxWords && (
+            <div style={{ fontSize: '0.8rem', textAlign: 'right', marginTop: 2, color: wordCount(value) > field.maxWords ? '#c53030' : '#75616a' }}>
+              {wordCount(value)}/{field.maxWords} words
+            </div>
+          )}
+        </>
       ) : field.type === 'select' ? (
         <select
           id={id}
@@ -289,6 +301,9 @@ function RegistrationForm() {
     if (step === 1) {
       // A half-filled sibling entry is an error; a completely empty one is just an unused card.
       Object.assign(next, validateSiblings(siblings, text.requiredError));
+    }
+    if (step === 3 && values.aboutSelf && wordCount(values.aboutSelf) > 100) {
+      next.aboutSelf = text.aboutSelfTooLongError;
     }
     if (step === 4 && memberMode) {
       ['memberName', 'memberRelation'].forEach(name => {

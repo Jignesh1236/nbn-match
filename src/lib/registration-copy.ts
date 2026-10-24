@@ -11,6 +11,7 @@ export type RegistrationFieldDefinition = {
   full?: boolean;
   placeholder?: LocaleText;
   badge?: string;
+  maxWords?: number;
 };
 
 const text = (bn: string, en: string): LocaleText => ({ bn, en });
@@ -118,8 +119,7 @@ export const registrationSections: {
     title: text('নিজের সম্পর্কে', 'About yourself'),
     subtitle: text('আপনার গল্প ও প্রত্যাশা নিজের ভাষায় লিখুন।', 'Describe yourself and your hopes in your own words.'),
     fields: [
-      { name: 'aboutSelf', label: text('নিজের পরিচিতি', 'About you'), required: true, full: true, type: 'textarea', placeholder: text('আপনার ব্যক্তিত্ব, আগ্রহ ও জীবনের দৃষ্টিভঙ্গি লিখুন', 'Share your personality, interests, and outlook on life') },
-      { name: 'expectations', label: text('জীবনসঙ্গীর কাছে প্রত্যাশা', 'What you hope for in a life partner'), full: true, type: 'textarea' },
+      { name: 'aboutSelf', label: text('নিজের পরিচিতি ও প্রত্যাশা', 'About yourself & expectations'), required: true, full: true, type: 'textarea', maxWords: 100, placeholder: text('আপনার ব্যক্তিত্ব, আগ্রহ, দৃষ্টিভঙ্গি এবং জীবনসঙ্গী থেকে প্রত্যাশা লিখুন', 'Share your personality, interests, outlook, and what you hope for in a life partner') },
     ],
   },
   {
@@ -168,6 +168,7 @@ export const registrationLabels = {
     requiredError: 'এই তথ্যটি পূরণ করা আবশ্যক।',
     phoneError: 'একটি সঠিক ফোন নম্বর লিখুন।',
     emailError: 'একটি সঠিক ইমেইল ঠিকানা লিখুন।',
+    aboutSelfTooLongError: 'শব্দ সীমা অতিক্রম করছেন (সর্বোচ্চ ১০০ শব্দ)।',
     chooseDocuments: 'নথি নির্বাচন করুন',
     optionalDemo: '(ঐচ্ছিক)',
     uploadInstructions: 'শুধু JPG, PNG বা PDF · প্রতি ফাইল সর্বোচ্চ ৫ MB।',

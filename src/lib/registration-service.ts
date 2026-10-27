@@ -1,4 +1,22 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from './supabase.js';
+
+export function normalizeDocumentMimeType(file: Pick<File, 'name' | 'type'>): string {
+  const ext = (file.name.split('.').pop() ?? 'bin').toLowerCase();
+
+  const JFIF_LIKE_EXTS = ['jfif', 'jpe', 'jif'];
+  return file.type && file.type !== ''
+    ? file.type
+    : JFIF_LIKE_EXTS.includes(ext)
+      ? 'image/jpeg'
+      : 'application/octet-stream';
+}
+
+export function buildUploadOptions(file: Pick<File, 'name' | 'type'>) {
+  return {
+    metadata: { mimetype: normalizeDocumentMimeType(file) },
+    upsert: false,
+  };
+}
 
 export type OpenEvent = {
   id: string;
@@ -17,6 +35,7 @@ export type RegistrationInput = {
   event_id: string;
   gender: string;
   private_fields: string[];
+  phone?: string | null;
   photo_path?: string | null;
   id_card_path?: string | null;
   accompanying_nid_path?: string | null;
@@ -59,35 +78,10 @@ export async function getOpenEvent(): Promise<OpenEvent> {
  */
 export async function uploadDocument(file: File): Promise<string> {
   const ext = (file.name.split('.').pop() ?? 'bin').toLowerCase();
-
-  // Normalise MIME type: .jfif and similar JPEG variants may report an empty
-  // or non-standard MIME type in some browsers.
-  const JFIF_LIKE_EXTS = ['jfif', 'jpe', 'jif'];
-  const mimeType =
-    file.type && file.type !== ''
-      ? file.type
-      : JFIF_LIKE_EXTS.includes(ext)
-        ? 'image/jpeg'
-        : 'application/octet-stream';
-
   const path = `registrations/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from('registration-files')
-    .upload(
-      path,
-      file,
-      {
-        // The anon bucket policy (`anon upload registration files only` in
-        // supabase/migrations/002_storage.sql) gates image/* uploads on the
-        // `metadata->>'mimetype'` column, which is populated from the `metadata`
-        // form field, NOT from the raw `contentType` form/header field. supabase-js
-        // v2's FileOptions maps `contentType` to the Content-Type header and does
-        // not apply it to Blob/File bodies, so the browser's own file type would
-        // never reach the policy check. Pass it explicitly via `metadata`.
-        metadata: { mimetype: mimeType },
-        upsert: false,
-      },
-    );
+    .upload(path, file, buildUploadOptions(file));
   if (error) throw error;
   return path;
 }
@@ -101,6 +95,7 @@ export async function submitRegistration(input: RegistrationInput): Promise<void
     event_id: input.event_id,
     gender: input.gender,
     private_fields: input.private_fields,
+    phone: input.phone ?? null,
     photo_path: input.photo_path ?? null,
     id_card_path: input.id_card_path ?? null,
     accompanying_nid_path: input.accompanying_nid_path ?? null,

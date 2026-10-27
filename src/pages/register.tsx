@@ -217,6 +217,12 @@ function calcAge(birthDate: string): number | null {
   return age;
 }
 
+function normalizePhoneForStorage(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const digits = value.replace(/\D/g, '');
+  return digits || null;
+}
+
 function RegistrationForm() {
   const { language } = useLanguage();
   const text = registrationLabels[language];
@@ -357,6 +363,7 @@ function RegistrationForm() {
         event_id: event.id,
         gender: values.gender || 'other',
         private_fields: collectPrivateFieldNames(siblings.length),
+        phone: normalizePhoneForStorage(values.phone),
         photo_path: photoPath,
         id_card_path: idCardPath,
         accompanying_nid_path: accompanyingNidPath,

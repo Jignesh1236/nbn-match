@@ -17,6 +17,7 @@ const AdminPage = lazy(() => import('@/admin/AdminPage'));
 // is fetched before the credentials + MFA checks pass.
 const AdminDashboard = lazy(() => import('@/admin/AdminDashboard'));
 const RegistrationsManager = lazy(() => import('@/admin/RegistrationsManager'));
+const CandidatePage = lazy(() => import('@/pages/candidate'));
 
 function Router() {
   const location = useLocation();
@@ -38,6 +39,8 @@ function Router() {
         <Routes>
           <Route path='/' element={<HomePage />} />
           <Route path='/register' element={<RegisterPage />} />
+          <Route path='/v/:token' element={<CandidatePage />} />
+          <Route path='/v' element={<CandidatePage />} />
           {/* Admin path is a layout route: AdminPage hosts the auth guard and
               only renders <Outlet /> (the dashboard) once the guard passes. */}
           <Route path={adminPath} element={<AdminPage />}>

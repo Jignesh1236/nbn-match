@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAdminAuth } from './auth/AdminAuthContext';
 import { EventsManager } from './EventsManager';
+import CandidateLinksPanel from './CandidateLinksPanel';
+import { listEvents } from './events-service';
 
 /**
  * Admin dashboard.
@@ -14,6 +16,8 @@ import { EventsManager } from './EventsManager';
 export default function AdminDashboard() {
   const { email, signOut, busy } = useAdminAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [events, setEvents] = useState<Array<{ id: string; event_code: string }>>([]);
 
   // Keep search engines from indexing the admin area.
   useEffect(() => {
@@ -27,6 +31,16 @@ export default function AdminDashboard() {
       document.head.appendChild(el);
     }
   }, []);
+
+  useEffect(() => {
+    void listEvents()
+      .then((rows: Array<{ id: string; event_code: string }>) => setEvents(rows))
+      .catch(() => setEvents([]));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedEventId && events.length) setSelectedEventId(events[0].id);
+  }, [events, selectedEventId]);
 
   const adminPath = import.meta.env.VITE_ADMIN_PATH || '/nbn-admin';
 
@@ -114,7 +128,13 @@ export default function AdminDashboard() {
           </p>
         </div>
         <EventsManager />
+        {selectedEventId ? (
+          <CandidateLinksPanel eventId={selectedEventId} />
+        ) : (
+          <p className='text-sm text-muted-foreground'>Create an event before generating candidate links.</p>
+        )}
       </main>
     </div>
   );
 }
+

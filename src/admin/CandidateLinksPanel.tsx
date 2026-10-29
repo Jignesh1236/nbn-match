@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import {
   downloadCsv,
   generateLinksForEvent,
@@ -23,6 +24,7 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
   const [requestRows, setRequestRows] = useState<RequestPairRow[]>([]);
   const [requestFilter, setRequestFilter] = useState<'all' | 'mutual' | 'sent' | 'withdrawn'>('all');
   const [linkFilter, setLinkFilter] = useState<'all' | 'active' | 'no_link' | 'revoked' | 'locked'>('all');
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
   const loadData = async () => {
     setLoading(true);
@@ -61,6 +63,28 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
       return row.status === requestFilter;
     });
   }, [requestRows, requestFilter]);
+
+  const groupedRequests = useMemo(() => {
+    const groups = new Map<string, RequestPairRow[]>();
+    filteredRequests.forEach((row) => {
+      const existing = groups.get(row.from_code) ?? [];
+      existing.push(row);
+      groups.set(row.from_code, existing);
+    });
+    return groups;
+  }, [filteredRequests]);
+
+  const toggleUser = (userCode: string) => {
+    setExpandedUsers((prev) => {
+      const next = new Set(prev);
+      if (next.has(userCode)) {
+        next.delete(userCode);
+      } else {
+        next.add(userCode);
+      }
+      return next;
+    });
+  };
 
   const handleGenerateLinks = async () => {
     try {
@@ -258,28 +282,55 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
         </div>
 
         <div className='overflow-x-auto'>
-          <table className='min-w-full text-left text-sm'>
-            <thead>
-              <tr className='border-b border-border'>
-                <th className='px-2 py-2'>From</th>
-                <th className='px-2 py-2'>To</th>
-                <th className='px-2 py-2'>Status</th>
-                <th className='px-2 py-2'>Mutual</th>
-                <th className='px-2 py-2'>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRequests.map((row) => (
-                <tr key={`${row.from_code}-${row.to_code}-${row.created_at}`} className='border-b border-border/60'>
-                  <td className='px-2 py-2 font-mono'>{row.from_code}</td>
-                  <td className='px-2 py-2 font-mono'>{row.to_code}</td>
-                  <td className='px-2 py-2 capitalize'>{row.status}</td>
-                  <td className='px-2 py-2'>{row.is_mutual ? 'Yes' : 'No'}</td>
-                  <td className='px-2 py-2'>{new Date(row.created_at).toLocaleString()}</td>
-                </tr>
+          {groupedRequests.size === 0 ? (
+            <p className='text-sm text-muted-foreground'>No requests found.</p>
+          ) : (
+            <div className='space-y-2'>
+              {Array.from(groupedRequests.entries()).map(([userCode, userRequests]) => (
+                <div key={userCode} className='rounded-md border border-border bg-card'>
+                  <button
+                    type='button'
+                    onClick={() => toggleUser(userCode)}
+                    className='flex w-full items-center justify-between px-3 py-2 text-left hover:bg-muted/50 transition-colors'
+                  >
+                    <div className='flex items-center gap-2'>
+                      {expandedUsers.has(userCode) ? (
+                        <ChevronDown size={16} className='text-muted-foreground' />
+                      ) : (
+                        <ChevronRight size={16} className='text-muted-foreground' />
+                      )}
+                      <span className='font-mono font-medium'>{userCode}</span>
+                      <span className='text-xs text-muted-foreground'>({userRequests.length} request{userRequests.length !== 1 ? 's' : ''})</span>
+                    </div>
+                  </button>
+                  {expandedUsers.has(userCode) && (
+                    <div className='border-t border-border'>
+                      <table className='min-w-full text-left text-sm'>
+                        <thead>
+                          <tr className='border-b border-border bg-muted/30'>
+                            <th className='px-3 py-2'>To</th>
+                            <th className='px-3 py-2'>Status</th>
+                            <th className='px-3 py-2'>Mutual</th>
+                            <th className='px-3 py-2'>Created</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {userRequests.map((row) => (
+                            <tr key={`${row.from_code}-${row.to_code}-${row.created_at}`} className='border-b border-border/60'>
+                              <td className='px-3 py-2 font-mono'>{row.to_code}</td>
+                              <td className='px-3 py-2 capitalize'>{row.status}</td>
+                              <td className='px-3 py-2'>{row.is_mutual ? 'Yes' : 'No'}</td>
+                              <td className='px-3 py-2'>{new Date(row.created_at).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

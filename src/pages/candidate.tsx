@@ -731,20 +731,20 @@ function CandidatePage() {
                   {!name && !education && compactDetails.length === 0 && (
                     <p style={styles.mutedText}>Profile details not available.</p>
                   )}
-                </div>
 
-                <button
-                  type='button'
-                  onClick={() => applyAction(key, requested ? 'withdraw' : 'send')}
-                  disabled={isBusy || (!canSend && !requested)}
-                  style={{
-                    ...styles.actionButton,
-                    ...(requested ? styles.withdraw : styles.send),
-                    opacity: isBusy || (!canSend && !requested) ? 0.6 : 1,
-                  }}
-                >
-                  {isBusy ? 'Please wait...' : requested ? 'Withdraw' : 'Send'}
-                </button>
+                  <button
+                    type='button'
+                    onClick={() => applyAction(key, requested ? 'withdraw' : 'send')}
+                    disabled={isBusy || (!canSend && !requested)}
+                    style={{
+                      ...styles.actionButton,
+                      ...(requested ? styles.withdraw : styles.send),
+                      opacity: isBusy || (!canSend && !requested) ? 0.6 : 1,
+                    }}
+                  >
+                    {isBusy ? 'Please wait...' : requested ? 'Withdraw' : 'Send'}
+                  </button>
+                </div>
               </article>
             );
           })}
@@ -900,6 +900,25 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     transition: 'box-shadow 0.2s ease, transform 0.2s ease',
   },
+  imageWrap: {
+    width: '100%',
+    height: 200,
+    background: '#f8f0f3',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+  imagePlaceholder: {
+    color: '#9c7a8a',
+    fontSize: 14,
+    fontWeight: 600,
+  },
   profileBody: {
     padding: 14,
     flex: 1,
@@ -1014,7 +1033,7 @@ const styles: Record<string, React.CSSProperties> = {
   actionButton: {
     display: 'block',
     width: '100%',
-    margin: 'auto 0 0',
+    marginTop: 'auto',
     padding: '12px 16px',
     border: 'none',
     borderRadius: 12,
@@ -1079,6 +1098,12 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#704b10',
     borderRadius: 12,
     fontWeight: 700,
+  },
+  mutedText: {
+    color: '#9c7a8a',
+    fontSize: 13,
+    fontStyle: 'italic',
+    margin: 0,
   },
   watermark: {
     position: 'fixed',

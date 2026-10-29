@@ -21,7 +21,6 @@ import {
   isPhoneLengthValid,
   normalizePhoneDigits,
 } from '../lib/candidate-phone';
-import './candidate.css';
 
 const SESSION_KEY = 'nbn_candidate_session_token';
 const LINK_KEY = 'nbn_candidate_link_token';

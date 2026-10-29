@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+  isPhoneLengthValid,
+  normalizePhoneDigits,
+} from '../lib/candidate-phone';
 
 const SESSION_KEY = 'nbn_candidate_session_token';
 const LINK_KEY = 'nbn_candidate_link_token';
@@ -20,7 +24,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   locked: 'This link is locked after too many wrong phone attempts. Please contact the organizer.',
   not_open: 'This link is not open yet. Please try again when the request window opens.',
   closed: 'This link has expired. The request window is closed.',
-  wrong_phone: 'That phone number does not match our records.',
+  invalid_number: 'Invalid number. Please enter a valid phone number.',
+  wrong_phone: 'Invalid number. This phone number does not match the number this link was generated for.',
   phone_not_on_file: 'No phone number is saved for this registration. Please contact the organizer.',
   session_invalid: 'Your session has expired. Please reopen your personal link.',
   invalid_target: 'This profile is not available.',
@@ -52,10 +57,6 @@ function readStoredSession(routeToken: string) {
   }
 
   return saved;
-}
-
-function normalizeDigits(value: string) {
-  return value.replace(/\D/g, '');
 }
 
 async function callCandidateFunction<T>(fn: string, body: Record<string, unknown>): Promise<T> {
@@ -317,14 +318,16 @@ function CandidatePage() {
   }, [routeToken, sessionToken, navigate]);
 
   const verifyPhone = async () => {
+    if (verifying) return;
+
     if (!routeToken) {
       setError('invalid_link');
       return;
     }
 
-    const digitsPhone = normalizeDigits(phone);
-    if (!digitsPhone) {
-      setError('wrong_phone');
+    const digitsPhone = normalizePhoneDigits(phone);
+    if (!isPhoneLengthValid(digitsPhone)) {
+      setError('invalid_number');
       return;
     }
 
@@ -402,13 +405,21 @@ function CandidatePage() {
           <p style={styles.subtitle}>Use the phone saved on your registration to continue.</p>
           <input
             type='tel'
-            inputMode='numeric'
+            inputMode='tel'
             autoComplete='tel'
+            maxLength={20}
             value={phone}
-            onChange={event => setPhone(event.target.value)}
+            onChange={event => {
+              setPhone(event.target.value);
+              if (error) setError(null);
+            }}
+            onKeyDown={event => {
+              if (event.key === 'Enter') void verifyPhone();
+            }}
             placeholder='e.g. 01712345678'
             style={styles.input}
             aria-label='Phone number'
+            aria-invalid={error === 'invalid_number' || error === 'wrong_phone'}
           />
           {error && <div style={styles.error}>{errorText(error)}</div>}
           <button

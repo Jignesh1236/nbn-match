@@ -10,6 +10,7 @@ import {
   type CandidateLinkRow,
   type RequestPairRow,
 } from './candidate-links';
+import { isPhoneLengthValid } from '@/lib/candidate-phone';
 
 const buttonClass = 'rounded-md border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:opacity-90';
 const dangerClass = 'rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive shadow-sm hover:opacity-90';
@@ -18,7 +19,7 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
   const [rows, setRows] = useState<CandidateLinkRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [generatedLinks, setGeneratedLinks] = useState<Array<{ registration_id: string; candidate_code: string; gender: string; token: string }>>([]);
+  const [generatedLinks, setGeneratedLinks] = useState<Array<{ registration_id: string; candidate_code: string; gender: string; phone: string | null; token: string }>>([]);
   const [requestRows, setRequestRows] = useState<RequestPairRow[]>([]);
   const [requestFilter, setRequestFilter] = useState<'all' | 'mutual' | 'sent' | 'withdrawn'>('all');
   const [linkFilter, setLinkFilter] = useState<'all' | 'active' | 'no_link' | 'revoked' | 'locked'>('all');
@@ -48,6 +49,11 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
     return rows.filter((row) => linkFilter === 'all' || row.link_status === linkFilter);
   }, [rows, linkFilter]);
 
+  const rowsWithoutPhone = useMemo(
+    () => rows.filter((row) => !isPhoneLengthValid(row.phone)),
+    [rows],
+  );
+
   const filteredRequests = useMemo(() => {
     return requestRows.filter((row) => {
       if (requestFilter === 'all') return true;
@@ -58,11 +64,13 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
 
   const handleGenerateLinks = async () => {
     try {
+      const phoneByRegistration = new Map(rows.map((row) => [row.registration_id, row.phone]));
       const result = await generateLinksForEvent(eventId);
       setGeneratedLinks(result.map((row) => ({
         registration_id: row.out_registration_id,
         candidate_code: row.out_candidate_code,
         gender: row.out_gender,
+        phone: phoneByRegistration.get(row.out_registration_id) ?? null,
         token: row.out_token,
       })));
       await loadData();
@@ -72,9 +80,21 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
   };
 
   const handleRegenerate = async (registrationId: string) => {
+    const target = rows.find((row) => row.registration_id === registrationId);
+    if (!target || !isPhoneLengthValid(target.phone)) {
+      setError('Add a valid phone number (at least 10 digits) to this registration before generating a link.');
+      return;
+    }
+
     try {
       const token = await regenerateLink(registrationId);
-      setGeneratedLinks([{ registration_id: registrationId, candidate_code: 'regenerated', gender: 'n/a', token }]);
+      setGeneratedLinks([{
+        registration_id: registrationId,
+        candidate_code: target.candidate_code ?? 'regenerated',
+        gender: target.gender ?? 'n/a',
+        phone: target.phone,
+        token,
+      }]);
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate link.');
@@ -120,12 +140,24 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
           <button type='button' onClick={handleGenerateLinks} className={buttonClass}>Generate links</button>
         </div>
 
+        {rowsWithoutPhone.length > 0 && (
+          <div className='mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-sm'>
+            {rowsWithoutPhone.length} approved candidate{rowsWithoutPhone.length === 1 ? '' : 's'} have no valid phone number.
+            They will not get a link until a phone with at least 10 digits is saved, because a link can only be opened with the saved number.
+          </div>
+        )}
+
         {generatedLinks.length > 0 && (
           <div className='mb-4 space-y-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3'>
             {generatedLinks.map((link) => (
               <div key={link.registration_id + link.token} className='flex flex-col gap-2 rounded-md bg-background p-2 sm:flex-row sm:items-center sm:justify-between'>
-                <div className='font-mono text-xs break-all'>
-                  {link.candidate_code}: {window.location.origin}/v/{link.token}
+                <div className='min-w-0'>
+                  <div className='text-xs font-medium'>
+                    {link.candidate_code} · phone: {link.phone ?? 'Missing'}
+                  </div>
+                  <div className='font-mono text-xs break-all'>
+                    {window.location.origin}/v/{link.token}
+                  </div>
                 </div>
                 <div className='flex gap-2'>
                   <button
@@ -179,7 +211,9 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
                   <tr key={row.registration_id} className='border-b border-border/60'>
                     <td className='px-2 py-2 font-mono'>{row.candidate_code ?? '—'}</td>
                     <td className='px-2 py-2'>{row.gender ?? '—'}</td>
-                    <td className='px-2 py-2'>{row.phone ?? 'Missing'}</td>
+                    <td className='px-2 py-2'>
+                      {row.phone ? row.phone : <span className='font-medium text-destructive'>Missing</span>}
+                    </td>
                     <td className='px-2 py-2'>
                       <span className='rounded-full border border-border px-2 py-0.5 text-xs capitalize'>
                         {row.link_status}
@@ -188,7 +222,15 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
                     <td className='px-2 py-2'>{row.last_used_at ? new Date(row.last_used_at).toLocaleString() : '—'}</td>
                     <td className='px-2 py-2'>
                       <div className='flex flex-wrap gap-2'>
-                        <button type='button' onClick={() => handleRegenerate(row.registration_id)} className={buttonClass}>Regenerate</button>
+                        <button
+                          type='button'
+                          onClick={() => handleRegenerate(row.registration_id)}
+                          disabled={!isPhoneLengthValid(row.phone)}
+                          title={isPhoneLengthValid(row.phone) ? undefined : 'Add a valid phone number to this registration first.'}
+                          className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          Regenerate
+                        </button>
                         <button type='button' onClick={() => handleRevoke(row.registration_id)} className={dangerClass}>Revoke</button>
                         <button type='button' onClick={() => handleResetLock(row.registration_id)} className={buttonClass}>Reset lock</button>
                       </div>

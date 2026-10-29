@@ -31,6 +31,10 @@ Deno.serve(async (req: Request) => {
   const hash = await sha256Hex(token);
   const cleanedPhone = normalizeDigits(phone);
 
+  if (cleanedPhone.length < 10 || cleanedPhone.length > 15) {
+    return errorResponse('invalid_number', allowedOrigin);
+  }
+
   try {
     const supabase = getServiceClient();
     const { data, error } = await supabase.rpc('link_open_session', {
@@ -40,7 +44,7 @@ Deno.serve(async (req: Request) => {
 
     if (error) {
       const msg = typeof error.message === 'string' ? error.message : 'invalid_link';
-      const code = ['invalid_link', 'locked', 'not_open', 'closed', 'wrong_phone', 'phone_not_on_file'].includes(msg)
+      const code = ['invalid_link', 'locked', 'not_open', 'closed', 'invalid_number', 'wrong_phone', 'phone_not_on_file'].includes(msg)
         ? msg
         : 'invalid_link';
       return errorResponse(code, allowedOrigin);

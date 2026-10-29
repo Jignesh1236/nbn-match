@@ -92,6 +92,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   locked: 423,
   not_open: 403,
   closed: 410,
+  invalid_number: 400,
   wrong_phone: 401,
   phone_not_on_file: 400,
   session_invalid: 401,

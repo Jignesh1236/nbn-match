@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, FileText, Heart } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
 import { useLanguage, type Language } from '@/lib/language';
+import { isPhoneLengthValid } from '@/lib/candidate-phone';
 import {
   memberFields,
   registrationLabels,
@@ -298,7 +299,7 @@ function RegistrationForm() {
     (requiredByStep[step] || []).forEach(name => {
       if (!values[name]?.trim()) next[name] = text.requiredError;
     });
-    if (step === 0 && values.phone && !/^[+\d][\d\s()-]{6,}$/.test(values.phone)) next.phone = text.phoneError;
+    if (step === 0 && values.phone && !isPhoneLengthValid(values.phone)) next.phone = text.phoneError;
     if (step === 0 && values.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email)) next.email = text.emailError;
     if (step === 0 && values.birthDate && event?.age_range) {
       const range = parseAgeRange(event.age_range);

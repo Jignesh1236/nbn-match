@@ -67,6 +67,11 @@ const normPhone = (value: string | null | undefined) => {
   return digits.length >= 10 ? digits.slice(-10) : digits;
 };
 
+const isValidPhone = (value: string | null | undefined) => {
+  const digits = (value ?? '').replace(/\D/g, '');
+  return digits.length >= 10 && digits.length <= 15;
+};
+
 const pickPublicProfile = (formData: Record<string, unknown>, profileFields: string[]) => {
   const result: Record<string, unknown> = {};
   for (const field of profileFields) {
@@ -252,6 +257,7 @@ function linkOpenSession(state: CandidateLinkState, token: string, phone: string
   if (state.now < state.event.links_open_at) return { ok: false, error: 'not_open', opens_at: state.event.links_open_at.toISOString() };
   if (state.now >= state.event.links_close_at) return { ok: false, error: 'closed' };
   if (!registration.phone) return { ok: false, error: 'phone_not_on_file' };
+  if (!isValidPhone(phone)) return { ok: false, error: 'invalid_number' };
 
   if (normPhone(phone) !== normPhone(registration.phone)) {
     link.failed_attempts += 1;
@@ -406,6 +412,7 @@ function adminGenerateLinks(state: CandidateLinkState) {
   for (const registration of Object.values(state.registrations)) {
     const hasActive = state.access_links.some((link) => link.registration_id === registration.id && link.revoked_at == null);
     if (registration.status !== 'approved' || registration.deleted_at != null || hasActive) continue;
+    if (!isValidPhone(registration.phone)) continue;
     const token = `token-${createHash('sha256').update(`${registration.id}:${Math.random()}`).digest('hex')}-${registration.candidate_code.toLowerCase()}`;
     state.access_links.push({
       id: `link-${registration.id}`,
@@ -554,6 +561,34 @@ test('before open and after close reject with the right codes', () => {
   assert.deepEqual(linkOpenSession(state, 'boy-one-link', '+8801712345678'), { ok: false, error: 'closed' });
 });
 
+test('a link only opens with the phone saved on that registration', () => {
+  const state = makeState();
+
+  const otherCandidatesNumber = linkOpenSession(state, 'boy-one-link', '+8801912345678');
+  assert.deepEqual(otherCandidatesNumber, { ok: false, error: 'wrong_phone', attempts_left: 4 });
+
+  const localFormatOfSameNumber = linkOpenSession(state, 'boy-one-link', '01712345678');
+  assert.equal(localFormatOfSameNumber.ok, true);
+
+  const countryCodeFormat = linkOpenSession(state, 'boy-one-link', '+880 1712-345678');
+  assert.equal(countryCodeFormat.ok, true);
+
+  assert.equal(state.access_sessions.length, 2);
+});
+
+test('a malformed phone number returns invalid_number without locking the link', () => {
+  const state = makeState();
+  const result = linkOpenSession(state, 'boy-one-link', '12345');
+  assert.deepEqual(result, { ok: false, error: 'invalid_number' });
+
+  const link = state.access_links.find((row) => row.registration_id === 'boy-1');
+  assert.equal(link?.failed_attempts, 0);
+  assert.equal(link?.locked_at, null);
+
+  const stillWorks = linkOpenSession(state, 'boy-one-link', '+8801712345678');
+  assert.equal(stillWorks.ok, true);
+});
+
 test('5 wrong phone attempts lock the link', () => {
   const state = makeState();
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -689,6 +724,18 @@ test('admin link generation and regeneration follow the expected contract', () =
 
   const resetLock = () => adminResetLinkLock(state, 'boy-1');
   assert.doesNotThrow(resetLock);
+});
+
+test('admin link generation skips candidates without a usable phone', () => {
+  const state = makeState();
+  state.access_links = [];
+  state.registrations['boy-1'].phone = '';
+  state.registrations['girl-2'].phone = '123';
+
+  const links = adminGenerateLinks(state);
+  const codes = links.map((row) => row.out_candidate_code).sort();
+  assert.deepEqual(codes, ['F201', 'M102']);
+  assert.equal(state.access_links.length, 2);
 });
 
 test('only the allowed public profile fields are included in returned profile payloads', () => {

@@ -1,6 +1,6 @@
 export type JsonObject = Record<string, unknown>;
 
-export function getAllowedOrigin(): string | null {
+export function getAllowedOrigin(requestOrigin?: string | null): string | null {
   const raw = (Deno.env.get('ALLOWED_ORIGIN') ?? Deno.env.get('SITE_ORIGIN') ?? '').trim();
   const values = raw
     .split(',')
@@ -8,8 +8,12 @@ export function getAllowedOrigin(): string | null {
     .filter(Boolean);
 
   if (values.length === 0) return null;
+  if (values.includes('*')) return '*';
 
-  return values[0] ?? null;
+  const origin = (requestOrigin ?? '').trim();
+  if (!origin) return values[0] ?? null;
+
+  return values.includes(origin) ? origin : null;
 }
 
 export async function sha256Hex(value: string): Promise<string> {
@@ -120,20 +124,36 @@ function createClient(url: string, key: string, options: Record<string, unknown>
     storage: {
       from: (bucket: string) => ({
         createSignedUrl: async (path: string, expiresIn: number) => {
-          const response = await fetch(`${url}/storage/v1/object/sign/${encodeURIComponent(bucket)}/${encodeURIComponent(path)}?expiresIn=${expiresIn}`, {
+          const encodedPath = path
+            .split('/')
+            .map((segment) => encodeURIComponent(segment))
+            .join('/');
+          const response = await fetch(`${url}/storage/v1/object/sign/${encodeURIComponent(bucket)}/${encodedPath}`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${key}`,
               'apikey': key,
+              'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ expiresIn }),
           });
           const text = await response.text();
           const json = text ? JSON.parse(text) : null;
           if (!response.ok) {
             return { data: null, error: { message: json?.message ?? 'signed_url_failed' } };
           }
+
+          const relative = json?.signedURL ?? json?.signedUrl ?? null;
+          if (!relative) {
+            return { data: null, error: { message: 'signed_url_missing' } };
+          }
+
+          const signedUrl = String(relative).startsWith('http')
+            ? String(relative)
+            : `${url}/storage/v1${relative}`;
+
           return {
-            data: { signedUrl: json?.signedURL ?? json?.signedUrl ?? null },
+            data: { signedUrl },
             error: null,
           };
         },

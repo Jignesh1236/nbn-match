@@ -10,7 +10,7 @@ import {
 } from '../_shared/edge.ts';
 
 Deno.serve(async (req: Request) => {
-  const allowedOrigin = getAllowedOrigin();
+  const allowedOrigin = getAllowedOrigin(req.headers.get('origin'));
 
   if (req.method === 'OPTIONS') {
     return buildJsonResponse(204, {}, allowedOrigin);

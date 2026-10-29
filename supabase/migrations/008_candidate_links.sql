@@ -371,10 +371,12 @@ begin
     and l.locked_at is null
     and r.status = 'approved'
     and r.deleted_at is null
-    and e.links_open_at is not null
-    and e.links_close_at is not null
-    and now() >= e.links_open_at
-    and now() < e.links_close_at;
+    and (
+      e.links_open_at is null or now() >= e.links_open_at
+    )
+    and (
+      e.links_close_at is null or now() < e.links_close_at
+    );
 
   if not found then
     raise exception 'session_invalid';
@@ -418,10 +420,10 @@ begin
   if l.locked_at is not null then
     return jsonb_build_object('ok', false, 'error', 'locked');
   end if;
-  if e.links_open_at is null or now() < e.links_open_at then
+  if e.links_open_at is not null and now() < e.links_open_at then
     return jsonb_build_object('ok', false, 'error', 'not_open', 'opens_at', e.links_open_at);
   end if;
-  if e.links_close_at is null or now() >= e.links_close_at then
+  if e.links_close_at is not null and now() >= e.links_close_at then
     return jsonb_build_object('ok', false, 'error', 'closed');
   end if;
 
@@ -443,7 +445,7 @@ begin
   insert into public.access_sessions (link_id, session_hash, expires_at)
   values (l.id,
           encode(sha256(convert_to(v_session, 'UTF8')), 'hex'),
-          least(now() + interval '2 hours', e.links_close_at));
+          least(now() + interval '2 hours', case when e.links_close_at is null then now() + interval '2 hours' else e.links_close_at end));
 
   update public.access_links
   set failed_attempts = 0, last_used_at = now()

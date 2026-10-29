@@ -91,6 +91,9 @@ export function EventsManager() {
       religion: row.religion,
       shift: row.shift,
       extra_guardian_charge: row.extra_guardian_charge,
+      links_open_at: row.links_open_at,
+      links_close_at: row.links_close_at,
+      max_requests_per_person: row.max_requests_per_person,
     });
     setNotice(null);
     setShowForm(true);

@@ -26,6 +26,9 @@ export interface AdminEvent {
   religion: string | null;
   shift: string | null;
   extra_guardian_charge: number;
+  links_open_at: string | null;
+  links_close_at: string | null;
+  max_requests_per_person: number;
   created_at: string;
   updated_at: string;
 }
@@ -48,6 +51,9 @@ export interface EventFormValues {
   religion: string | null;
   shift: string | null;
   extra_guardian_charge: number;
+  links_open_at: string | null;
+  links_close_at: string | null;
+  max_requests_per_person: number;
 }
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
@@ -61,6 +67,9 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   religion: null,
   shift: null,
   extra_guardian_charge: 0,
+  links_open_at: null,
+  links_close_at: null,
+  max_requests_per_person: 8,
 };
 
 /** Extra text shown when several events share one day (e.g. "Morning"). Null otherwise. */
@@ -76,6 +85,9 @@ export function eventFormFromRow(row: AdminEvent): EventFormValues {
     religion: row.religion,
     shift: row.shift,
     extra_guardian_charge: row.extra_guardian_charge,
+    links_open_at: row.links_open_at,
+    links_close_at: row.links_close_at,
+    max_requests_per_person: row.max_requests_per_person,
   };
 }
 

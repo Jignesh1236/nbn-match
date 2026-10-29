@@ -223,6 +223,52 @@ export function EventForm({ editingCode, editingId, initial, onSaved, onCancel }
               />
             </div>
           </div>
+          <div className='grid gap-4 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <label htmlFor='event-links-open' className={labelClassName}>
+                Candidate link opens at
+              </label>
+              <input
+                id='event-links-open'
+                name='links_open_at'
+                type='datetime-local'
+                value={form.links_open_at ? form.links_open_at.slice(0, 16) : ''}
+                onChange={(event) => set('links_open_at', event.target.value ? new Date(event.target.value).toISOString() : null)}
+                className={inputClassName}
+              />
+            </div>
+            <div className='space-y-1.5'>
+              <label htmlFor='event-links-close' className={labelClassName}>
+                Candidate link closes at
+              </label>
+              <input
+                id='event-links-close'
+                name='links_close_at'
+                type='datetime-local'
+                value={form.links_close_at ? form.links_close_at.slice(0, 16) : ''}
+                onChange={(event) => set('links_close_at', event.target.value ? new Date(event.target.value).toISOString() : null)}
+                className={inputClassName}
+              />
+            </div>
+            <div className='space-y-1.5'>
+              <label htmlFor='event-max-requests' className={labelClassName}>
+                Max requests per candidate
+              </label>
+              <input
+                id='event-max-requests'
+                name='max_requests_per_person'
+                type='number'
+                min={1}
+                max={50}
+                step={1}
+                required
+                value={form.max_requests_per_person}
+                onChange={(event) =>
+                  set('max_requests_per_person', Math.min(50, Math.max(1, Math.trunc(Number(event.target.value || 1)))))}
+                className={inputClassName}
+              />
+            </div>
+          </div>
 
           {saveError ? (
             <p

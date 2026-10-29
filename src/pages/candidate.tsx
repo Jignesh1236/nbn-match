@@ -2,13 +2,57 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const SESSION_KEY = 'nbn_candidate_session_token';
+const LINK_KEY = 'nbn_candidate_link_token';
+const CANDIDATE_CODE_KEY = 'nbn_candidate_code';
 const CANDIDATE_FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
 const functionHeaders = () => ({
   'Content-Type': 'application/json',
   'apikey': ANON_KEY,
+  'Authorization': `Bearer ${ANON_KEY}`,
 });
+
+const SESSION_END_CODES = new Set(['session_invalid', 'invalid_link', 'closed', 'locked']);
+
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid_link: 'This link is not valid. Please ask the organizer for a new link.',
+  locked: 'This link is locked after too many wrong phone attempts. Please contact the organizer.',
+  not_open: 'This link is not open yet. Please try again when the request window opens.',
+  closed: 'This link has expired. The request window is closed.',
+  wrong_phone: 'That phone number does not match our records.',
+  phone_not_on_file: 'No phone number is saved for this registration. Please contact the organizer.',
+  session_invalid: 'Your session has expired. Please reopen your personal link.',
+  invalid_target: 'This profile is not available.',
+  already_sent: 'You have already sent a request to this candidate.',
+  limit_full: 'You have used all your requests for this link.',
+  not_found: 'That request could not be found.',
+  network_error: 'Connection problem. Please check your internet and try again.',
+};
+
+function errorText(code: string | null | undefined) {
+  if (!code) return '';
+  return ERROR_MESSAGES[code] ?? 'Something went wrong. Please try again.';
+}
+
+function clearStoredSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(LINK_KEY);
+  sessionStorage.removeItem(CANDIDATE_CODE_KEY);
+}
+
+function readStoredSession(routeToken: string) {
+  const saved = sessionStorage.getItem(SESSION_KEY);
+  if (!saved) return null;
+
+  const savedLink = sessionStorage.getItem(LINK_KEY);
+  if (routeToken && savedLink !== routeToken) {
+    clearStoredSession();
+    return null;
+  }
+
+  return saved;
+}
 
 function normalizeDigits(value: string) {
   return value.replace(/\D/g, '');
@@ -89,21 +133,47 @@ function CandidatePage() {
   const routeToken = params.token ?? '';
   const [phone, setPhone] = useState('');
   const [verifying, setVerifying] = useState(false);
-  const [sessionToken, setSessionToken] = useState<string | null>(() => sessionStorage.getItem(SESSION_KEY));
+  const [sessionToken, setSessionToken] = useState<string | null>(() => readStoredSession(routeToken));
   const [profiles, setProfiles] = useState<ProfileItem[]>([]);
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [requestsUsed, setRequestsUsed] = useState(0);
   const [maxRequests, setMaxRequests] = useState(8);
   const [error, setError] = useState<string | null>(null);
-  const [loadingProfiles, setLoadingProfiles] = useState(false);
+  const [loadingProfiles, setLoadingProfiles] = useState(() => Boolean(readStoredSession(routeToken)));
   const [actioning, setActioning] = useState<Record<string, boolean>>({});
   const [serverNow, setServerNow] = useState<number | null>(null);
+  const [clockOffset, setClockOffset] = useState<number | null>(null);
   const [closesAt, setClosesAt] = useState<number | null>(null);
-  const [candidateCode, setCandidateCode] = useState('');
+  const [candidateCode, setCandidateCode] = useState(() => sessionStorage.getItem(CANDIDATE_CODE_KEY) ?? '');
   const [verified, setVerified] = useState(false);
   const [showPhoneForm, setShowPhoneForm] = useState(!sessionToken && !!routeToken);
   const [hasLoadedSession, setHasLoadedSession] = useState(false);
   const lastSessionRef = useRef<string | null>(null);
+  const loadIdRef = useRef(0);
+
+  const applyServerClock = (value: string | null | undefined) => {
+    if (!value) return;
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed)) {
+      setClockOffset(parsed - Date.now());
+    }
+  };
+
+  const endCandidateSession = (code: string) => {
+    clearStoredSession();
+    loadIdRef.current += 1;
+    lastSessionRef.current = null;
+    setSessionToken(null);
+    setVerified(false);
+    setCandidateCode('');
+    setProfiles([]);
+    setRequests([]);
+    setRequestsUsed(0);
+    setLoadingProfiles(false);
+    setError(code);
+    setHasLoadedSession(true);
+    setShowPhoneForm(Boolean(routeToken));
+  };
 
   useEffect(() => {
     const meta = document.querySelector('meta[name="robots"]');
@@ -155,13 +225,37 @@ function CandidatePage() {
   }, [closesAt, serverNow]);
 
   useEffect(() => {
-    const tick = () => setServerNow(Date.now());
+    if (clockOffset === null) return;
+    const tick = () => setServerNow(Date.now() + clockOffset);
     tick();
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [clockOffset]);
+
+  useEffect(() => {
+    if (!routeToken) return;
+    const savedLink = sessionStorage.getItem(LINK_KEY);
+    if (savedLink === routeToken) return;
+
+    const hadSession = Boolean(sessionToken);
+    clearStoredSession();
+    loadIdRef.current += 1;
+    lastSessionRef.current = null;
+    setSessionToken(null);
+    setVerified(false);
+    setCandidateCode('');
+    setProfiles([]);
+    setRequests([]);
+    setRequestsUsed(0);
+    setError(null);
+    setShowPhoneForm(true);
+    if (hadSession) setHasLoadedSession(false);
+  }, [routeToken]);
 
   const loadSessionData = async (activeSessionToken: string) => {
+    const loadId = ++loadIdRef.current;
+    const isCurrent = () => loadId === loadIdRef.current && sessionStorage.getItem(SESSION_KEY) === activeSessionToken;
+
     setLoadingProfiles(true);
     setError(null);
 
@@ -175,23 +269,34 @@ function CandidatePage() {
         }),
       ]);
 
+      if (!isCurrent()) return;
+
       setProfiles(profilesRes.items ?? []);
       setRequests(requestsRes.items ?? []);
       setRequestsUsed(profilesRes.requests_used ?? requestsRes.requests_used ?? 0);
       setMaxRequests(profilesRes.max_requests ?? requestsRes.max_requests ?? 8);
-      setClosesAt(Date.parse(profilesRes.closes_at || requestsRes.closes_at || new Date().toISOString()));
-      setServerNow(Date.parse(profilesRes.server_now || requestsRes.server_now || new Date().toISOString()));
+      const closesAtValue = profilesRes.closes_at || requestsRes.closes_at;
+      if (closesAtValue) {
+        const parsedClosesAt = Date.parse(closesAtValue);
+        if (Number.isFinite(parsedClosesAt)) setClosesAt(parsedClosesAt);
+      }
+      applyServerClock(profilesRes.server_now || requestsRes.server_now);
       setVerified(true);
       setHasLoadedSession(true);
     } catch (err) {
+      if (!isCurrent()) return;
+
       const code = err instanceof Error && err.message ? err.message : 'session_invalid';
-      setError(code);
-      sessionStorage.removeItem(SESSION_KEY);
-      setSessionToken(null);
-      setVerified(false);
-      setHasLoadedSession(true);
+      if (SESSION_END_CODES.has(code)) {
+        endCandidateSession(code);
+      } else {
+        setError('network_error');
+        setHasLoadedSession(true);
+      }
     } finally {
-      setLoadingProfiles(false);
+      if (loadId === loadIdRef.current) {
+        setLoadingProfiles(false);
+      }
     }
   };
 
@@ -205,6 +310,7 @@ function CandidatePage() {
 
   useEffect(() => {
     if (!routeToken || !sessionToken) return;
+    if (sessionStorage.getItem(LINK_KEY) !== routeToken) return;
     if (window.location.pathname !== '/v') {
       navigate('/v', { replace: true });
     }
@@ -231,19 +337,26 @@ function CandidatePage() {
         phone: digitsPhone,
       });
 
-      setCandidateCode(payload.candidate_code || '');
+      const code = payload.candidate_code || '';
+      setCandidateCode(code);
+      sessionStorage.setItem(CANDIDATE_CODE_KEY, code);
+      sessionStorage.setItem(LINK_KEY, routeToken);
       sessionStorage.setItem(SESSION_KEY, payload.session_token);
       setSessionToken(payload.session_token);
       setRequestsUsed(payload.requests_used ?? 0);
       setMaxRequests(payload.max_requests ?? 8);
-      setClosesAt(Date.parse(payload.closes_at));
-      setServerNow(Date.parse(payload.server_now));
+      setHasLoadedSession(true);
+      if (payload.closes_at) {
+        const parsedClosesAt = Date.parse(payload.closes_at);
+        if (Number.isFinite(parsedClosesAt)) setClosesAt(parsedClosesAt);
+      }
+      applyServerClock(payload.server_now);
       setVerified(true);
       setShowPhoneForm(false);
       navigate('/v', { replace: true });
     } catch (err) {
-      const code = err instanceof Error && err.message ? err.message : 'invalid_link';
-      setError(code);
+      const raw = err instanceof Error && err.message ? err.message : 'invalid_link';
+      setError(ERROR_MESSAGES[raw] ? raw : 'network_error');
     } finally {
       setVerifying(false);
     }
@@ -265,8 +378,13 @@ function CandidatePage() {
       setMaxRequests(result.max_requests ?? maxRequests);
       await loadSessionData(sessionToken);
     } catch (err) {
-      const code = err instanceof Error && err.message ? err.message : 'session_invalid';
-      setError(code);
+      const raw = err instanceof Error && err.message ? err.message : 'session_invalid';
+      const code = ERROR_MESSAGES[raw] ? raw : 'network_error';
+      if (SESSION_END_CODES.has(code)) {
+        endCandidateSession(code);
+      } else {
+        setError(code);
+      }
     } finally {
       setActioning(prev => ({ ...prev, [targetCode]: false }));
     }
@@ -292,7 +410,7 @@ function CandidatePage() {
             style={styles.input}
             aria-label='Phone number'
           />
-          {error && <div style={styles.error}>{error}</div>}
+          {error && <div style={styles.error}>{errorText(error)}</div>}
           <button
             type='button'
             disabled={verifying}
@@ -324,7 +442,9 @@ function CandidatePage() {
         <div style={styles.card}>
           <div style={styles.badge}>Candidate access</div>
           <h1 style={styles.title}>Session expired</h1>
-          <p style={styles.subtitle}>Please reopen your personal link and verify again.</p>
+          <p style={styles.subtitle}>
+            {error ? errorText(error) : 'Please reopen your personal link and verify again.'}
+          </p>
         </div>
       </div>
     );
@@ -371,7 +491,20 @@ function CandidatePage() {
           <span>{requestsUsed} of {maxRequests} requests used</span>
         </div>
 
-        {error && <div style={styles.error}>{error}</div>}
+        {error && (
+          <div style={styles.error}>
+            {errorText(error)}
+            {error === 'network_error' && sessionToken && (
+              <button
+                type='button'
+                onClick={() => void loadSessionData(sessionToken)}
+                style={styles.retryButton}
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        )}
 
         {hasReachedLimit && (
           <div style={styles.limitBox}>Limit Full — You have used all {maxRequests} requests for this link.</div>
@@ -521,6 +654,17 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #f3c5d1',
     color: '#8d2944',
     fontSize: 14,
+  },
+  retryButton: {
+    display: 'block',
+    marginTop: 10,
+    border: '1px solid #d9a3b4',
+    borderRadius: 8,
+    background: '#ffffff',
+    color: '#8d2944',
+    padding: '8px 14px',
+    fontWeight: 700,
+    cursor: 'pointer',
   },
   headerRow: {
     display: 'flex',

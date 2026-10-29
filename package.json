@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "node scripts/vite.mjs",
+    "build": "node scripts/vite.mjs build",
+    "preview": "node scripts/vite.mjs preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test \"tests/**/*.test.ts\""
   },

@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   const { email, signOut, busy } = useAdminAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [events, setEvents] = useState<Array<{ id: string; event_code: string }>>([]);
+  const [events, setEvents] = useState<Array<{ id: string; event_code: string; date?: string | null }>>([]);
 
   // Keep search engines from indexing the admin area.
   useEffect(() => {
@@ -34,15 +34,21 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     void listEvents()
-      .then((rows: Array<{ id: string; event_code: string }>) => setEvents(rows))
-      .catch(() => setEvents([]));
+      .then((rows: Array<{ id: string; event_code: string; date?: string | null }>) => {
+        setEvents(rows);
+        setSelectedEventId((current) => {
+          if (current && rows.some((row) => row.id === current)) return current;
+          return rows[0]?.id ?? null;
+        });
+      })
+      .catch(() => {
+        setEvents([]);
+        setSelectedEventId(null);
+      });
   }, []);
 
-  useEffect(() => {
-    if (!selectedEventId && events.length) setSelectedEventId(events[0].id);
-  }, [events, selectedEventId]);
-
   const adminPath = import.meta.env.VITE_ADMIN_PATH || '/nbn-admin';
+  const selectedEvent = events.find((event) => event.id === selectedEventId) ?? null;
 
   return (
     <div className='admin-shell min-h-screen bg-background text-foreground'>
@@ -127,6 +133,33 @@ export default function AdminDashboard() {
             Create and configure events for matchmaking registration.
           </p>
         </div>
+
+        {events.length > 0 ? (
+          <div className='rounded-md border border-border bg-card p-3'>
+            <label htmlFor='selected-event' className='mb-2 block text-sm font-medium text-foreground'>
+              Active event
+            </label>
+            <select
+              id='selected-event'
+              value={selectedEventId ?? ''}
+              onChange={(event) => setSelectedEventId(event.target.value || null)}
+              className='w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 sm:max-w-md'
+            >
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.event_code} {event.date ? `• ${event.date}` : ''}
+                </option>
+              ))}
+            </select>
+            {selectedEvent ? (
+              <p className='mt-2 text-xs text-muted-foreground'>
+                Generating candidate links for {selectedEvent.event_code}
+                {selectedEvent.date ? ` on ${selectedEvent.date}` : ''}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <EventsManager />
         {selectedEventId ? (
           <CandidateLinksPanel eventId={selectedEventId} />

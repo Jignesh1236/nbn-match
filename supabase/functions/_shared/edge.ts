@@ -1,16 +1,45 @@
 export type JsonObject = Record<string, unknown>;
 
+/** Read a Supabase Edge Function secret without assuming the Deno global exists. */
+function readEnv(name: string): string {
+  const deno = (globalThis as {
+    Deno?: { env?: { get: (key: string) => string | undefined } };
+  }).Deno;
+  if (!deno?.env?.get) return '';
+  return (deno.env.get(name) ?? '').trim();
+}
+
+/**
+ * CORS for the candidate endpoints.
+ *
+ * These endpoints are authorised by unguessable link/session tokens plus the
+ * candidate's registered phone number, so CORS is not the security boundary.
+ * An earlier version returned one fixed origin from ALLOWED_ORIGIN. That made
+ * a personal link work on the machine that generated it but fail on every
+ * other device (LAN IP, preview URL, custom domain): the browser origin did
+ * not match the fixed value, so the response was blocked before the app could
+ * read it. We now reflect the caller's Origin so the same link works from any
+ * device.
+ *
+ * To restore strict browser-origin checking, set CORS_STRICT_ALLOWLIST=true
+ * and list the exact origins in ALLOWED_ORIGIN (comma separated, or "*").
+ */
 export function getAllowedOrigin(requestOrigin?: string | null): string | null {
-  const raw = (Deno.env.get('ALLOWED_ORIGIN') ?? Deno.env.get('SITE_ORIGIN') ?? '').trim();
+  const origin = (requestOrigin ?? '').trim();
+  const strict = readEnv('CORS_STRICT_ALLOWLIST').toLowerCase();
+
+  if (strict !== 'true') {
+    return origin || '*';
+  }
+
+  const raw = readEnv('ALLOWED_ORIGIN') || readEnv('SITE_ORIGIN');
   const values = raw
     .split(',')
     .map((part) => part.trim())
     .filter(Boolean);
 
-  if (values.length === 0) return null;
+  if (values.length === 0) return origin || null;
   if (values.includes('*')) return '*';
-
-  const origin = (requestOrigin ?? '').trim();
   if (!origin) return values[0] ?? null;
 
   return values.includes(origin) ? origin : null;
@@ -63,6 +92,7 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   locked: 423,
   not_open: 403,
   closed: 410,
+  invalid_number: 400,
   wrong_phone: 401,
   phone_not_on_file: 400,
   session_invalid: 401,
@@ -81,8 +111,8 @@ export function successResponse(body: JsonObject, allowedOrigin: string | null):
 }
 
 export function getServiceClient() {
-  const url = Deno.env.get('SUPABASE_URL');
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const url = readEnv('SUPABASE_URL');
+  const key = readEnv('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !key) {
     throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
   }

@@ -50,3 +50,22 @@ Build output is a static site in `dist/`.
   ```
 
 - **Any host with sub-path** (e.g. GitHub Pages project site): build with `BASE_PATH=/your-repo/ pnpm build`.
+
+## Candidate links (Supabase Edge Functions)
+
+Candidate links (`/v/<token>`) call five Edge Functions: `candidate-open`,
+`candidate-profiles`, `candidate-my-requests`, `candidate-send-request` and
+`candidate-withdraw-request`. The React app talks to them cross-origin, so the
+functions must be **redeployed** after any change in `supabase/functions`:
+
+```bash
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase functions deploy --project-ref <project-ref>
+```
+
+The functions reflect the caller's `Origin` by default (see `.env.example` for
+the optional strict allow-list). If a link opens but profile data never loads,
+open the browser devtools Network tab: a CORS error on `candidate-open` /
+`candidate-profiles` means the deployed function is old and needs the command
+above.

@@ -510,6 +510,41 @@ test('boy sees only girls and no private profile fields leak', () => {
   }
 });
 
+test('one link opens independent sessions on multiple devices', () => {
+  const state = makeState();
+  const firstDevice = linkOpenSession(state, 'boy-one-link', '+8801712345678');
+  const secondDevice = linkOpenSession(state, 'boy-one-link', '+8801712345678');
+
+  assert.equal(firstDevice.ok, true);
+  assert.equal(secondDevice.ok, true);
+  assert.notEqual(firstDevice.session_token, secondDevice.session_token);
+  assert.equal(state.access_sessions.length, 2);
+
+  const firstPayload = linkListProfiles(state, sha256(String(firstDevice.session_token)));
+  const secondPayload = linkListProfiles(state, sha256(String(secondDevice.session_token)));
+  assert.equal(firstPayload.ok, true);
+  assert.equal(secondPayload.ok, true);
+  assert.deepEqual(firstPayload.items.map((item) => item.candidate_code).sort(), ['F201', 'F202']);
+  assert.deepEqual(secondPayload.items.map((item) => item.candidate_code).sort(), ['F201', 'F202']);
+});
+
+test('requests sent from one device are visible on the other device', () => {
+  const state = makeState();
+  const firstDevice = linkOpenSession(state, 'boy-one-link', '+8801712345678');
+  const secondDevice = linkOpenSession(state, 'boy-one-link', '+8801712345678');
+  assert.equal(firstDevice.ok, true);
+  assert.equal(secondDevice.ok, true);
+
+  const sent = linkSendRequest(state, sha256(String(firstDevice.session_token)), 'F201');
+  assert.equal(sent.ok, true);
+
+  const secondProfiles = linkListProfiles(state, sha256(String(secondDevice.session_token)));
+  const target = secondProfiles.items.find((item) => item.candidate_code === 'F201');
+  assert.ok(target);
+  assert.equal(target!.requested, true);
+  assert.equal(secondProfiles.requests_used, 1);
+});
+
 test('before open and after close reject with the right codes', () => {
   const state = makeState();
   state.now = new Date('2026-01-01T08:59:59Z');

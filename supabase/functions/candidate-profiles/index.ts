@@ -57,9 +57,12 @@ Deno.serve(async (req: Request) => {
           return { ...item, photo_url: null };
         }
 
+        // Profile photos are lazy-loaded while the candidate scrolls. A 60s
+        // signed URL expired before many images were requested, so they
+        // appeared broken on slower phones. One hour covers the whole session.
         const { data: signedData, error: signedError } = await supabase.storage
           .from('registration-files')
-          .createSignedUrl(photoPath, 60);
+          .createSignedUrl(photoPath, 3600);
 
         return {
           ...item,

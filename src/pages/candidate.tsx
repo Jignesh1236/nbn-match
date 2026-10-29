@@ -527,6 +527,11 @@ function CandidatePage() {
             const key = profile.candidate_code;
             const isBusy = !!actioning[key];
             const canSend = !requested && !hasReachedLimit;
+            const profileDetails = profile.profile ? Object.entries(profile.profile) : [];
+            const compactDetails = profileDetails.filter(([label]) => {
+              const key = label.toLowerCase();
+              return !['phone', 'email', 'guardian', 'address', 'nid', 'id', 'full name'].includes(key);
+            }).slice(0, 4);
 
             return (
               <article key={key} style={styles.profileCard}>
@@ -545,12 +550,34 @@ function CandidatePage() {
                 </div>
 
                 <div style={styles.profileBody}>
-                  <div style={styles.code}>{profile.candidate_code}</div>
-                  {profile.profile && Object.entries(profile.profile).slice(0, 6).map(([label, value]) => (
-                    <div key={`${key}-${label}`} style={styles.profileLine}>
-                      <strong>{label}:</strong> {String(value ?? '—')}
+                  <div style={styles.profileHeader}>
+                    <div style={styles.codeWrap}>
+                      <div style={styles.code}>{profile.candidate_code}</div>
+                      {compactDetails.length > 0 && (
+                        <div style={styles.profileMeta}>
+                          {compactDetails.slice(0, 3).map(([label, value]) => (
+                            <span key={`${key}-${label}`} style={styles.metaPill}>
+                              {String(value ?? '—')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    {requested ? <span style={styles.requestedChip}>Requested</span> : null}
+                  </div>
+
+                  {compactDetails.length > 0 ? (
+                    <div style={styles.profileFields}>
+                      {compactDetails.map(([label, value]) => (
+                        <div key={`${key}-${label}`} style={styles.profileLine}>
+                          <span style={styles.profileLabel}>{label}:</span>
+                          <span style={styles.profileValue}>{String(value ?? '—')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={styles.mutedText}>Profile details not available.</p>
+                  )}
                 </div>
 
                 <button
@@ -601,7 +628,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '16px',
   },
   container: {
-    maxWidth: 980,
+    maxWidth: 1280,
     margin: '0 auto',
     paddingBottom: 32,
   },
@@ -704,60 +731,103 @@ const styles: Record<string, React.CSSProperties> = {
   },
   profileGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr',
-    gap: 16,
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: 14,
+    alignItems: 'stretch',
   },
   profileCard: {
     background: '#fff',
     border: '1px solid #eed6df',
-    borderRadius: 18,
+    borderRadius: 16,
     overflow: 'hidden',
     boxShadow: '0 8px 16px rgba(81, 22, 32, 0.04)',
-  },
-  imageWrap: {
-    width: '100%',
-    aspectRatio: '4 / 4.5',
-    background: '#f7ebef',
-    overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    display: 'block',
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#754a5d',
-    fontWeight: 600,
+    flexDirection: 'column',
+    minHeight: 330,
+    width: '100%',
   },
   profileBody: {
-    padding: 14,
+    padding: 10,
+    flex: 1,
+  },
+  profileHeader: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 10,
+  },
+  codeWrap: {
+    flex: 1,
+    minWidth: 0,
   },
   code: {
     fontWeight: 800,
     color: '#5a1838',
-    marginBottom: 8,
+    marginBottom: 0,
+    fontSize: 15,
+    letterSpacing: '0.04em',
+  },
+  profileMeta: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 8,
+  },
+  metaPill: {
+    background: '#fef3f7',
+    border: '1px solid #f0d7e0',
+    borderRadius: 999,
+    padding: '3px 7px',
+    fontSize: 10,
+    color: '#7a1b42',
+    fontWeight: 700,
+  },
+  requestedChip: {
+    background: '#f5ecff',
+    border: '1px solid #dcc8ff',
+    color: '#563c8b',
+    borderRadius: 999,
+    padding: '4px 7px',
+    fontSize: 10,
+    fontWeight: 700,
+    whiteSpace: 'nowrap',
+    marginTop: 2,
+  },
+  profileFields: {
+    display: 'grid',
+    gap: 6,
+    marginTop: 4,
   },
   profileLine: {
-    fontSize: 13,
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 6,
+    fontSize: 12,
     color: '#4c2d39',
-    lineHeight: 1.5,
-    marginBottom: 2,
+    lineHeight: 1.4,
+    marginBottom: 0,
+  },
+  profileLabel: {
+    color: '#7d4f63',
+    fontWeight: 700,
+    minWidth: 70,
+    display: 'inline-block',
+  },
+  profileValue: {
+    color: '#381d29',
+    fontWeight: 600,
+    wordBreak: 'break-word',
   },
   actionButton: {
     display: 'block',
-    width: 'calc(100% - 24px)',
-    margin: '0 12px 12px',
-    padding: '12px 14px',
+    width: 'calc(100% - 12px)',
+    margin: '0 6px 8px',
+    padding: '10px 12px',
     border: 'none',
-    borderRadius: 12,
+    borderRadius: 10,
     fontWeight: 700,
-    fontSize: 15,
+    fontSize: 14,
     cursor: 'pointer',
   },
   send: {

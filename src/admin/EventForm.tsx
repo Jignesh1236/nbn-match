@@ -8,6 +8,7 @@ import {
   type EventFormValues,
   type EventStatus,
 } from './events-service';
+import { isValidEventCapacity } from '@/lib/gender-capacity';
 
 const inputClassName =
   'w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -42,6 +43,10 @@ export function EventForm({ editingCode, editingId, initial, onSaved, onCancel }
     if (saving) return;
     if (!form.date) {
       setSaveError('Please choose an event date.');
+      return;
+    }
+    if (!isValidEventCapacity(form.max_participants)) {
+      setSaveError('Maximum participants must be zero (unlimited) or a non-negative even number.');
       return;
     }
     setSaving(true);
@@ -134,19 +139,17 @@ export function EventForm({ editingCode, editingId, initial, onSaved, onCancel }
             </div>
             <div className='space-y-1.5'>
               <label htmlFor='event-max' className={labelClassName}>
-                Max participants (0 = no limit)
+                Max participants (even number; 0 = no limit)
               </label>
               <input
                 id='event-max'
                 name='max_participants'
                 type='number'
                 min={0}
-                step={1}
+                step={2}
                 required
                 value={form.max_participants}
-                onChange={(event) =>
-                  set('max_participants', Math.max(0, Math.trunc(Number(event.target.value))))
-                }
+                onChange={(event) => set('max_participants', Number(event.target.value))}
                 className={inputClassName}
               />
             </div>

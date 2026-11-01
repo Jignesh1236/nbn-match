@@ -13,6 +13,7 @@ import {
   type EventStatus,
 } from './events-service';
 import { EventForm } from './EventForm';
+import { getGenderSpotsRemaining } from '@/lib/gender-capacity';
 
 export const STATUS_LABELS: Record<EventStatus, string> = {
   open: 'Open',
@@ -248,7 +249,17 @@ export function EventsManager({ onEventSaved }: { onEventSaved?: (event: AdminEv
                       {` · Registered ${formatCount(counts[row.id]?.total, row.max_participants)}`}
                     </p>
                     <p className='text-xs text-muted-foreground'>
-                      Men: {genderCounts[row.id]?.men ?? 0} · Women: {genderCounts[row.id]?.women ?? 0}
+                      Men: {genderCounts[row.id]?.men ?? 0}
+                      {' · '}
+                      {getGenderSpotsRemaining(row.max_participants, genderCounts[row.id]?.men ?? 0) === null
+                        ? 'unlimited spots remaining'
+                        : `${getGenderSpotsRemaining(row.max_participants, genderCounts[row.id]?.men ?? 0)} men spots remaining`}
+                      {' · '}
+                      Women: {genderCounts[row.id]?.women ?? 0}
+                      {' · '}
+                      {getGenderSpotsRemaining(row.max_participants, genderCounts[row.id]?.women ?? 0) === null
+                        ? 'unlimited spots remaining'
+                        : `${getGenderSpotsRemaining(row.max_participants, genderCounts[row.id]?.women ?? 0)} women spots remaining`}
                     </p>
                     {row.age_range || row.religion ? (
                       <p className='text-xs text-muted-foreground'>

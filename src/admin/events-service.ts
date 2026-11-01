@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { isValidEventCapacity } from '@/lib/gender-capacity';
 
 /**
  * Phase 4 data access for the admin events screen.
@@ -123,6 +124,9 @@ export async function getEventGenderCounts(): Promise<EventGenderCounts[]> {
 
 /** Insert only — code and serial are stamped by the database trigger. */
 export async function createEvent(values: EventFormValues): Promise<AdminEvent> {
+  if (!isValidEventCapacity(values.max_participants)) {
+    throw new Error('Maximum participants must be zero (unlimited) or a non-negative even number.');
+  }
   const { data, error } = await supabase.from('events').insert(values).select().single();
   if (error) throw error;
   return data as AdminEvent;
@@ -130,6 +134,9 @@ export async function createEvent(values: EventFormValues): Promise<AdminEvent> 
 
 /** Update only — code and serial are frozen by the database trigger. */
 export async function updateEvent(id: string, values: EventFormValues): Promise<AdminEvent> {
+  if (!isValidEventCapacity(values.max_participants)) {
+    throw new Error('Maximum participants must be zero (unlimited) or a non-negative even number.');
+  }
   const { data, error } = await supabase
     .from('events')
     .update(values)
@@ -149,6 +156,9 @@ export function friendlyEventError(error: unknown): string {
   }
   if (/duplicate key|already exists/i.test(message)) {
     return 'An event with these details already exists.';
+  }
+  if (/max_participants_even|even number of participants/i.test(message)) {
+    return 'Maximum participants must be zero (unlimited) or a non-negative even number.';
   }
   return message;
 }

@@ -29,6 +29,10 @@ export type OpenEvent = {
   religion: string | null;
   shift: string | null;
   extra_guardian_charge: number;
+  men_registered: number;
+  women_registered: number;
+  men_remaining: number | null;
+  women_remaining: number | null;
 } | null;
 
 export type RegistrationInput = {

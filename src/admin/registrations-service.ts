@@ -36,13 +36,15 @@ export async function listRegistrations(filters?: {
   status?: RegistrationStatus;
   gender?: string;
   category?: string; // 'self' | 'family'
+  payment_method?: string;
 }): Promise<RegistrationRow[]> {
   let query = supabase.from('registrations').select(
-    'id, event_id, status, gender, candidate_code, transaction_id, admin_note, created_at, deleted_at, photo_path, id_card_path, form_data'
+    'id, event_id, status, gender, candidate_code, transaction_id, payment_method, admin_note, created_at, deleted_at, photo_path, id_card_path, form_data'
   );
   if (filters?.event_id) query = query.eq('event_id', filters.event_id);
   if (filters?.status)   query = query.eq('status', filters.status);
   if (filters?.gender)   query = query.eq('gender', filters.gender);
+  if (filters?.payment_method) query = query.eq('payment_method', filters.payment_method);
   // category filter: 'self' → registeringFor=self, 'family' → registeringFor=family
   if (filters?.category) query = query.eq('form_data->>registeringFor', filters.category);
   const { data, error } = await query.order('created_at', { ascending: false });

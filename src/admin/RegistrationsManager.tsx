@@ -15,6 +15,7 @@ import { listEvents } from './events-service';
 import type { AdminEvent } from './events-service';
 import { RegistrationDetails } from './RegistrationDetails';
 import { exportAllFull } from './export-csv';
+import { filterRegistrationRows } from './registration-filters';
 
 const PAGE_SIZE = 25;
 type SortColumn = 'code' | 'event' | 'name' | 'gender' | 'status' | 'date';
@@ -368,6 +369,9 @@ export default function RegistrationsManager() {
   const [selectedStatus, setSelectedStatus] = useState<RegistrationStatus | undefined>(undefined);
   const [selectedGender, setSelectedGender] = useState<string | undefined>(undefined);
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | undefined>(undefined);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [search, setSearch]     = useState('');
   const [page, setPage]         = useState(1);
   const [sortColumn, setSortColumn] = useState<SortColumn>('date');
@@ -378,6 +382,7 @@ export default function RegistrationsManager() {
   const [modal, setModal]       = useState<{ reg: RegistrationRow; action: ActionKey } | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
   const [toast, setToast]       = useState<{ message: string; ok: boolean } | null>(null);
+  const loadRequestId = useRef(0);
 
   const showToast = (message: string, ok: boolean) => {
     setToast({ message, ok });
@@ -385,6 +390,7 @@ export default function RegistrationsManager() {
   };
 
   const load = async () => {
+    const requestId = ++loadRequestId.current;
     setLoading(true);
     setLoadError(null);
     try {
@@ -394,9 +400,11 @@ export default function RegistrationsManager() {
           status: selectedStatus,
           gender: selectedGender,
           category: selectedCategory,
+          payment_method: selectedPaymentMethod,
         }),
         listEvents(),
       ]);
+      if (requestId !== loadRequestId.current) return;
       setEvents(evts);
       setAllRows(rows.map((r) => {
         const fd = r.form_data as Record<string, unknown> | undefined;
@@ -408,30 +416,18 @@ export default function RegistrationsManager() {
       }));
       setPage(1);
     } catch (err) {
+      if (requestId !== loadRequestId.current) return;
       setLoadError(err instanceof Error ? err.message : String(err));
       setAllRows([]);
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestId.current) setLoading(false);
     }
   };
 
-  useEffect(() => { void load(); }, [selectedEvent, selectedStatus, selectedGender, selectedCategory]);
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => { void load(); }, [selectedEvent, selectedStatus, selectedGender, selectedCategory, selectedPaymentMethod]);
+  useEffect(() => { setPage(1); }, [search, dateFrom, dateTo]);
 
-  const filtered = search.trim()
-    ? allRows.filter((r) => {
-        const fd = r.form_data as Record<string, unknown> | undefined;
-        const phone = (typeof fd?.phone === 'string' ? fd.phone : '') +
-                      (typeof fd?.memberPhone === 'string' ? fd.memberPhone : '');
-        const term = search.toLowerCase();
-        return (
-          r.participant_name?.toLowerCase().includes(term) ||
-          phone.toLowerCase().includes(term) ||
-          r.transaction_id?.toLowerCase().includes(term) ||
-          (r.candidate_code ?? '').toLowerCase().includes(term)
-        );
-      })
-    : allRows;
+  const filtered = filterRegistrationRows(allRows, { search, dateFrom, dateTo });
 
   const eventLabel = (id: string) =>
     events.find((e) => e.id === id)?.event_code ?? id.slice(0, 8);
@@ -520,13 +516,19 @@ export default function RegistrationsManager() {
     </button>
   );
 
-  const hasFilters = !!(selectedEvent || selectedStatus || selectedGender || selectedCategory || search);
+  const hasFilters = !!(
+    selectedEvent || selectedStatus || selectedGender || selectedCategory ||
+    selectedPaymentMethod || search || dateFrom || dateTo
+  );
   const clearFilters = () => {
     setSelectedEvent(undefined);
     setSelectedStatus(undefined);
     setSelectedGender(undefined);
     setSelectedCategory(undefined);
+    setSelectedPaymentMethod(undefined);
     setSearch('');
+    setDateFrom('');
+    setDateTo('');
     setPage(1);
   };
 
@@ -633,10 +635,44 @@ export default function RegistrationsManager() {
               <option value='family'>Family member</option>
             </select>
 
+            <select
+              value={selectedPaymentMethod ?? ''}
+              onChange={(e) => setSelectedPaymentMethod(e.target.value || undefined)}
+              className={selClass}
+              aria-label='Filter by payment method'
+            >
+              <option value=''>All payment methods</option>
+              <option value='bkash'>bKash</option>
+              <option value='nagad'>Nagad</option>
+              <option value='rocket'>Rocket</option>
+              <option value='khalti'>Khalti</option>
+            </select>
+
+            <label className='flex items-center gap-2 text-xs text-muted-foreground'>
+              From
+              <input
+                type='date'
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className={selClass}
+                aria-label='Registration date from'
+              />
+            </label>
+            <label className='flex items-center gap-2 text-xs text-muted-foreground'>
+              To
+              <input
+                type='date'
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className={selClass}
+                aria-label='Registration date to'
+              />
+            </label>
+
             <div className='col-span-2 md:col-span-1 md:min-w-64 md:flex-1'>
               <input
                 type='text'
-                placeholder='Search name, phone, txn ID, code…'
+                placeholder='Search name, phone, email, txn ID, code…'
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className={`w-full ${selClass}`}

@@ -4,9 +4,11 @@ import {
   EMPTY_EVENT_FORM,
   friendlyEventError,
   getEventCounts,
+  getEventGenderCounts,
   listEvents,
   type AdminEvent,
   type EventCounts,
+  type EventGenderCounts,
   type EventFormValues,
   type EventStatus,
 } from './events-service';
@@ -38,11 +40,16 @@ function formatCount(count: number | null | undefined, max: number): string {
  * Phase 4: list, create and edit events. Rendered only inside the guarded
  * dashboard. Code and serial are stamped by the DB trigger and frozen after.
  */
-export function EventsManager() {
+export function EventsManager({ onEventSaved }: { onEventSaved?: (event: AdminEvent) => void } = {}) {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [counts, setCounts] = useState<Record<string, EventCounts>>({});
+  const [genderCounts, setGenderCounts] = useState<Record<string, EventGenderCounts>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [statusFilter, setStatusFilter] = useState<EventStatus | ''>('');
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<AdminEvent | null>(null);
@@ -53,11 +60,18 @@ export function EventsManager() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [rows, countRows] = await Promise.all([listEvents(), getEventCounts()]);
+      const [rows, countRows, genderRows] = await Promise.all([
+        listEvents(),
+        getEventCounts(),
+        getEventGenderCounts(),
+      ]);
       setEvents(rows);
       const byEvent: Record<string, EventCounts> = {};
       for (const row of countRows) byEvent[row.event_id] = row;
       setCounts(byEvent);
+      const byGender: Record<string, EventGenderCounts> = {};
+      for (const row of genderRows) byGender[row.event_id] = row;
+      setGenderCounts(byGender);
     } catch (error) {
       setLoadError(friendlyEventError(error));
     } finally {
@@ -68,6 +82,27 @@ export function EventsManager() {
   useEffect(() => {
     void load();
   }, []);
+
+  const filteredEvents = events.filter((event) => {
+    const term = search.trim().toLowerCase();
+    const matchesSearch = !term || [
+      event.event_code,
+      event.area ?? '',
+      event.shift ?? '',
+    ].some((value) => value.toLowerCase().includes(term));
+    return matchesSearch &&
+      (!dateFrom || event.date >= dateFrom) &&
+      (!dateTo || event.date <= dateTo) &&
+      (!statusFilter || event.status === statusFilter);
+  });
+
+  const hasFilters = !!(search || dateFrom || dateTo || statusFilter);
+  const clearFilters = () => {
+    setSearch('');
+    setDateFrom('');
+    setDateTo('');
+    setStatusFilter('');
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -118,6 +153,52 @@ export function EventsManager() {
           {notice}
         </p>
       ) : null}
+      <div className='grid gap-2 rounded-md border border-border bg-card p-3 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_repeat(3,minmax(9rem,auto))_auto]'>
+        <label className='sr-only' htmlFor='event-search'>Search events</label>
+        <input
+          id='event-search'
+          type='search'
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder='Search event code, area, or shift'
+          className='min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm'
+        />
+        <label className='flex items-center gap-2 text-xs text-muted-foreground'>
+          From
+          <input
+            aria-label='Event date from'
+            type='date'
+            value={dateFrom}
+            onChange={(event) => setDateFrom(event.target.value)}
+            className='min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground'
+          />
+        </label>
+        <label className='flex items-center gap-2 text-xs text-muted-foreground'>
+          To
+          <input
+            aria-label='Event date to'
+            type='date'
+            value={dateTo}
+            onChange={(event) => setDateTo(event.target.value)}
+            className='min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-2 text-sm text-foreground'
+          />
+        </label>
+        <label className='sr-only' htmlFor='event-status-filter'>Filter events by status</label>
+        <select
+          id='event-status-filter'
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value as EventStatus | '')}
+          className='rounded-md border border-input bg-background px-3 py-2 text-sm'
+        >
+          <option value=''>All statuses</option>
+          <option value='open'>Open</option>
+          <option value='closed'>Closed</option>
+          <option value='finished'>Finished</option>
+        </select>
+        <button type='button' onClick={clearFilters} disabled={!hasFilters} className={ghostButton}>
+          Clear filters
+        </button>
+      </div>
       {loadError ? (
         <div className='space-y-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
           <p role='alert'>{loadError}</p>
@@ -132,9 +213,13 @@ export function EventsManager() {
         <p className='rounded-md border border-border bg-card px-3 py-6 text-center text-sm text-muted-foreground'>
           No events yet. Create the first one to open registration.
         </p>
+      ) : filteredEvents.length === 0 ? (
+        <p className='rounded-md border border-border bg-card px-3 py-6 text-center text-sm text-muted-foreground'>
+          No events match these filters.
+        </p>
       ) : (
         <ul className='space-y-3'>
-          {events.map((row) => (
+          {filteredEvents.map((row) => (
             <li key={row.id}>
               <Card>
                 <CardContent className='flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5'>
@@ -146,7 +231,10 @@ export function EventsManager() {
                       <span
                         className={`rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[row.status]}`}
                       >
-                        {STATUS_LABELS[row.status]}
+                        {row.status === 'open' && row.max_participants > 0 &&
+                        (counts[row.id]?.total ?? 0) >= row.max_participants
+                          ? 'Full'
+                          : STATUS_LABELS[row.status]}
                       </span>
                     </div>
                     <p className='text-sm text-muted-foreground'>
@@ -158,6 +246,9 @@ export function EventsManager() {
                       Price {row.price}
                       {row.discount_price > 0 ? ` · Discount ${row.discount_price}` : null}
                       {` · Registered ${formatCount(counts[row.id]?.total, row.max_participants)}`}
+                    </p>
+                    <p className='text-xs text-muted-foreground'>
+                      Men: {genderCounts[row.id]?.men ?? 0} · Women: {genderCounts[row.id]?.women ?? 0}
                     </p>
                     {row.age_range || row.religion ? (
                       <p className='text-xs text-muted-foreground'>
@@ -185,6 +276,8 @@ export function EventsManager() {
             setEvents((prev) =>
               wasEdit ? prev.map((row) => (row.id === saved.id ? saved : row)) : [saved, ...prev],
             );
+            onEventSaved?.(saved);
+            void load();
             setNotice(
               wasEdit
                 ? `Event ${saved.event_code} updated.`
@@ -202,4 +295,3 @@ export function EventsManager() {
     </div>
   );
 }
-

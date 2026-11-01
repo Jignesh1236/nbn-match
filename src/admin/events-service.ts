@@ -39,6 +39,12 @@ export interface EventCounts {
   approved: number;
 }
 
+export interface EventGenderCounts {
+  event_id: string;
+  men: number;
+  women: number;
+}
+
 /** Fields the form collects. Money arrives as numbers; nullable text arrives trimmed or null. */
 export interface EventFormValues {
   date: string;
@@ -107,6 +113,12 @@ export async function getEventCounts(): Promise<EventCounts[]> {
   const { data, error } = await supabase.rpc('event_registration_counts');
   if (error) throw error;
   return (data ?? []) as EventCounts[];
+}
+
+export async function getEventGenderCounts(): Promise<EventGenderCounts[]> {
+  const { data, error } = await supabase.rpc('event_registration_gender_counts');
+  if (error) throw error;
+  return (data ?? []) as EventGenderCounts[];
 }
 
 /** Insert only — code and serial are stamped by the database trigger. */

@@ -17,6 +17,7 @@ import { RegistrationDetails } from './RegistrationDetails';
 import { exportAllFull } from './export-csv';
 
 const PAGE_SIZE = 25;
+type SortColumn = 'code' | 'event' | 'name' | 'gender' | 'status' | 'date';
 
 const STATUS_STYLE: Record<RegistrationStatus, string> = {
   pending:  'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700',
@@ -369,6 +370,8 @@ export default function RegistrationsManager() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const [search, setSearch]     = useState('');
   const [page, setPage]         = useState(1);
+  const [sortColumn, setSortColumn] = useState<SortColumn>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [detailReg, setDetailReg] = useState<RegistrationRow | null>(null);
   const [loading, setLoading]   = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -430,8 +433,28 @@ export default function RegistrationsManager() {
       })
     : allRows;
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageRows   = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const eventLabel = (id: string) =>
+    events.find((e) => e.id === id)?.event_code ?? id.slice(0, 8);
+
+  const sortedRows = [...filtered].sort((first, second) => {
+    const valueFor = (row: RegistrationRow): string => {
+      switch (sortColumn) {
+        case 'code': return row.candidate_code ?? '';
+        case 'event': return eventLabel(row.event_id);
+        case 'name': return row.participant_name ?? '';
+        case 'gender': return row.gender ?? '';
+        case 'status': return row.status;
+        case 'date': return row.created_at;
+      }
+    };
+    const comparison = valueFor(first).localeCompare(valueFor(second), undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    });
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
+  const pageRows   = sortedRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleAction = (reg: RegistrationRow, action: ActionKey) => {
     setModal({ reg, action });
@@ -474,8 +497,38 @@ export default function RegistrationsManager() {
     }
   };
 
-  const eventLabel = (id: string) =>
-    events.find((e) => e.id === id)?.event_code ?? id.slice(0, 8);
+  const changeSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection((direction) => direction === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection(column === 'date' ? 'desc' : 'asc');
+    }
+    setPage(1);
+  };
+
+  const sortButton = (column: SortColumn, label: string) => (
+    <button
+      type='button'
+      onClick={() => changeSort(column)}
+      className='inline-flex items-center gap-1 text-left hover:text-foreground'
+      aria-label={`Sort by ${label}${sortColumn === column ? `, ${sortDirection === 'asc' ? 'ascending' : 'descending'}` : ''}`}
+      aria-pressed={sortColumn === column}
+    >
+      {label}
+      <span aria-hidden='true'>{sortColumn === column ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}</span>
+    </button>
+  );
+
+  const hasFilters = !!(selectedEvent || selectedStatus || selectedGender || selectedCategory || search);
+  const clearFilters = () => {
+    setSelectedEvent(undefined);
+    setSelectedStatus(undefined);
+    setSelectedGender(undefined);
+    setSelectedCategory(undefined);
+    setSearch('');
+    setPage(1);
+  };
 
   const selClass = 'rounded-lg border border-input bg-background px-3 py-2 text-xs sm:text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-primary';
 
@@ -589,6 +642,41 @@ export default function RegistrationsManager() {
                 className={`w-full ${selClass}`}
               />
             </div>
+            <div className='col-span-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2 lg:hidden'>
+              <label className='sr-only' htmlFor='registration-sort'>Sort registrations</label>
+              <select
+                id='registration-sort'
+                value={sortColumn}
+                onChange={(event) => {
+                  setSortColumn(event.target.value as SortColumn);
+                  setPage(1);
+                }}
+                className={selClass}
+              >
+                <option value='date'>Registration date</option>
+                <option value='name'>Name</option>
+                <option value='gender'>Gender</option>
+                <option value='event'>Event</option>
+                <option value='status'>Status</option>
+                <option value='code'>Candidate code</option>
+              </select>
+              <button
+                type='button'
+                onClick={() => setSortDirection((direction) => direction === 'asc' ? 'desc' : 'asc')}
+                className='rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium shadow-xs hover:bg-muted'
+                aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`}
+              >
+                {sortDirection === 'asc' ? 'Ascending ↑' : 'Descending ↓'}
+              </button>
+            </div>
+            <button
+              type='button'
+              onClick={clearFilters}
+              disabled={!hasFilters}
+              className='col-span-2 rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium shadow-xs hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 md:col-span-1'
+            >
+              Clear filters
+            </button>
           </div>
         </div>
 
@@ -616,14 +704,14 @@ export default function RegistrationsManager() {
                 <table className='w-full text-sm text-left'>
                   <thead className='border-b border-border bg-muted/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
                     <tr>
-                      <th className='px-4 py-3'>Code</th>
-                      <th className='px-4 py-3'>Event</th>
-                      <th className='px-4 py-3'>Participant</th>
+                      <th className='px-4 py-3'>{sortButton('code', 'Code')}</th>
+                      <th className='px-4 py-3'>{sortButton('event', 'Event')}</th>
+                      <th className='px-4 py-3'>{sortButton('name', 'Participant')}</th>
                       <th className='px-4 py-3'>Phone</th>
-                      <th className='px-4 py-3'>Gender</th>
-                      <th className='px-4 py-3'>Status</th>
+                      <th className='px-4 py-3'>{sortButton('gender', 'Gender')}</th>
+                      <th className='px-4 py-3'>{sortButton('status', 'Status')}</th>
                       <th className='px-4 py-3'>Txn ID</th>
-                      <th className='px-4 py-3'>Date</th>
+                      <th className='px-4 py-3'>{sortButton('date', 'Date')}</th>
                       <th className='px-4 py-3 text-right'>Actions</th>
                     </tr>
                   </thead>

@@ -16,11 +16,14 @@ import { buildWhatsAppShareUrl, formatWhatsAppNumber, isPhoneLengthValid } from 
 const buttonClass = 'rounded-md border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:opacity-90';
 const dangerClass = 'rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive shadow-sm hover:opacity-90';
 
-function CandidateLinksPanel({ eventId }: { eventId: string }) {
+function CandidateLinksPanel({ eventId, eventLabel }: { eventId: string; eventLabel: string }) {
   const [rows, setRows] = useState<CandidateLinkRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generatedLinks, setGeneratedLinks] = useState<Array<{ registration_id: string; candidate_code: string; gender: string; phone: string | null; token: string }>>([]);
+  const [generating, setGenerating] = useState(false);
+  const [copiedRegistrationId, setCopiedRegistrationId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [requestRows, setRequestRows] = useState<RequestPairRow[]>([]);
   const [requestFilter, setRequestFilter] = useState<'all' | 'mutual' | 'sent' | 'withdrawn'>('all');
   const [linkFilter, setLinkFilter] = useState<'all' | 'active' | 'no_link' | 'revoked' | 'locked'>('all');
@@ -44,6 +47,8 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
   };
 
   useEffect(() => {
+    setGeneratedLinks([]);
+    setNotice(null);
     if (eventId) void loadData();
   }, [eventId]);
 
@@ -87,6 +92,9 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
   };
 
   const handleGenerateLinks = async () => {
+    setGenerating(true);
+    setError(null);
+    setNotice(null);
     try {
       const phoneByRegistration = new Map(rows.map((row) => [row.registration_id, row.phone]));
       const result = await generateLinksForEvent(eventId);
@@ -97,9 +105,24 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
         phone: phoneByRegistration.get(row.out_registration_id) ?? null,
         token: row.out_token,
       })));
+      setNotice(result.length
+        ? `Generated ${result.length} candidate link${result.length === 1 ? '' : 's'}.`
+        : 'No eligible candidates need a new link for this event.');
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate links.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCopyLink = async (registrationId: string, token: string) => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/v/${token}`);
+      setCopiedRegistrationId(registrationId);
+      setNotice('Candidate link copied to clipboard.');
+    } catch (err) {
+      setError(err instanceof Error ? `Could not copy link: ${err.message}` : 'Could not copy link. Check clipboard permissions and try again.');
     }
   };
 
@@ -161,14 +184,26 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
       <div className='rounded-md border border-border bg-card p-4'>
         <div className='mb-3 flex flex-wrap items-center justify-between gap-3'>
           <h3 className='text-lg font-semibold'>Candidate links</h3>
-          <button type='button' onClick={handleGenerateLinks} className={buttonClass}>Generate links</button>
+          <button type='button' onClick={handleGenerateLinks} disabled={generating || loading} className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-50`}>
+            {generating ? 'Generating…' : 'Generate links'}
+          </button>
         </div>
+
+        <p className='mb-3 text-sm text-muted-foreground'>
+          Generate links for approved candidates in {eventLabel}. Each link is private to one candidate and requires their saved phone number to open.
+        </p>
 
         {rowsWithoutPhone.length > 0 && (
           <div className='mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-sm'>
             {rowsWithoutPhone.length} approved candidate{rowsWithoutPhone.length === 1 ? '' : 's'} have no valid phone number.
             They will not get a link until a phone with at least 10 digits is saved, because a link can only be opened with the saved number.
           </div>
+        )}
+
+        {notice && (
+          <p role='status' className='mb-3 rounded-md border border-emerald-500/40 bg-emerald-500/10 p-2 text-sm text-emerald-700 dark:text-emerald-400'>
+            {notice}
+          </p>
         )}
 
         {generatedLinks.length > 0 && (
@@ -191,15 +226,15 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
                 <div className='flex gap-2'>
                   <button
                     type='button'
-                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}/v/${link.token}`)}
+                    onClick={() => void handleCopyLink(link.registration_id, link.token)}
                     className={buttonClass}
                   >
-                    Copy
+                    {copiedRegistrationId === link.registration_id ? 'Copied' : 'Copy link'}
                   </button>
                   <a
                     href={buildWhatsAppShareUrl(
                       link.phone,
-                      `NBN Match Making Event\n${window.location.origin}/v/${link.token}`,
+                      `NBN Match Making Event — ${eventLabel}\n${window.location.origin}/v/${link.token}`,
                     )}
                     target='_blank'
                     rel='noreferrer'
@@ -217,7 +252,12 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
           </div>
         )}
 
-        {error && <div className='mb-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive'>{error}</div>}
+        {error && (
+          <div className='mb-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive'>
+            <p role='alert'>{error}</p>
+            <button type='button' onClick={() => void loadData()} className='mt-2 underline'>Retry loading</button>
+          </div>
+        )}
 
         <div className='mb-3 flex flex-wrap gap-2'>
           {(['all', 'active', 'no_link', 'revoked', 'locked'] as const).map((value) => (
@@ -229,6 +269,10 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
 
         {loading ? (
           <p className='text-sm text-muted-foreground'>Loading candidate links…</p>
+        ) : filteredRows.length === 0 ? (
+          <p className='rounded-md border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground'>
+            {rows.length ? 'No candidate links match this status filter.' : 'No approved candidates are available for this event yet.'}
+          </p>
         ) : (
           <div className='overflow-x-auto'>
             <table className='min-w-full text-left text-sm'>
@@ -294,7 +338,9 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
         </div>
 
         <div className='overflow-x-auto'>
-          {groupedRequests.size === 0 ? (
+          {loading ? (
+            <p className='text-sm text-muted-foreground'>Loading candidate requests…</p>
+          ) : groupedRequests.size === 0 ? (
             <p className='text-sm text-muted-foreground'>No requests found.</p>
           ) : (
             <div className='space-y-2'>

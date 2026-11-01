@@ -11,7 +11,7 @@ import {
   type CandidateLinkRow,
   type RequestPairRow,
 } from './candidate-links';
-import { isPhoneLengthValid } from '@/lib/candidate-phone';
+import { buildWhatsAppShareUrl, formatWhatsAppNumber, isPhoneLengthValid } from '@/lib/candidate-phone';
 
 const buttonClass = 'rounded-md border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:opacity-90';
 const dangerClass = 'rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive shadow-sm hover:opacity-90';
@@ -182,6 +182,11 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
                   <div className='font-mono text-xs break-all'>
                     {window.location.origin}/v/{link.token}
                   </div>
+                  {!formatWhatsAppNumber(link.phone) && (
+                    <div className='mt-1 text-xs text-amber-600'>
+                      No valid WhatsApp number on file — WhatsApp will open so you can choose a contact.
+                    </div>
+                  )}
                 </div>
                 <div className='flex gap-2'>
                   <button
@@ -192,12 +197,19 @@ function CandidateLinksPanel({ eventId }: { eventId: string }) {
                     Copy
                   </button>
                   <a
-                    href={`https://wa.me/?text=${encodeURIComponent(`${window.location.origin}/v/${link.token}`)}`}
+                    href={buildWhatsAppShareUrl(
+                      link.phone,
+                      `NBN Match Making Event\n${window.location.origin}/v/${link.token}`,
+                    )}
                     target='_blank'
                     rel='noreferrer'
                     className={buttonClass}
+                    aria-label={`Share via WhatsApp for ${link.candidate_code}`}
+                    title={formatWhatsAppNumber(link.phone)
+                      ? 'Open WhatsApp with the candidate number pre-filled'
+                      : 'Open WhatsApp to choose a contact and send the link'}
                   >
-                    WhatsApp
+                    Share via WhatsApp
                   </a>
                 </div>
               </div>

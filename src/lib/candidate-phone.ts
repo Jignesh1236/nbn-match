@@ -11,6 +11,35 @@ export function normalizePhoneDigits(value: string | null | undefined): string {
 }
 
 /**
+ * Format a candidate number for WhatsApp click-to-chat links so admins can send
+ * a pre-filled message directly to the saved contact when a valid number exists.
+ * Bangladesh local numbers like "01712345678" become "+8801712345678".
+ */
+export function formatWhatsAppNumber(value: string | null | undefined): string | null {
+  const digits = normalizePhoneDigits(value);
+  if (!digits) return null;
+  if (digits.length < MIN_PHONE_DIGITS || digits.length > MAX_PHONE_DIGITS) return null;
+
+  if (digits.startsWith('880')) return `+${digits}`;
+  if (digits.startsWith('0')) return `+88${digits}`;
+  if (digits.length === 10) return `+880${digits}`;
+  return `+${digits}`;
+}
+
+export const toWhatsAppNumber = formatWhatsAppNumber;
+
+export function buildWhatsAppShareUrl(value: string | null | undefined, text: string): string {
+  const encodedText = encodeURIComponent(text.trim() || 'NBN Match Making Event');
+  const number = formatWhatsAppNumber(value);
+  if (number) {
+    return `https://wa.me/${number}?text=${encodedText}`;
+  }
+  return `https://wa.me/?text=${encodedText}`;
+}
+
+export const getWhatsAppShareUrl = buildWhatsAppShareUrl;
+
+/**
  * A candidate link is verified against the phone saved on the registration.
  * Reject obviously unusable input before calling the server so a typo does not
  * count as a failed attempt and the user gets an immediate "invalid number".

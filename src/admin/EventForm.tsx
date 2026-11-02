@@ -273,6 +273,22 @@ export function EventForm({ editingCode, editingId, initial, onSaved, onCancel }
             </div>
           </div>
 
+          <div className='space-y-1.5'>
+            <label htmlFor='event-friend-requests' className={labelClassName}>
+              Enable friend requests
+            </label>
+            <input
+              id='event-friend-requests'
+              name='friend_requests_enabled'
+              type='checkbox'
+              checked={form.friend_requests_enabled}
+              onChange={(event) => set('friend_requests_enabled', event.target.checked)}
+            />
+            <p className='text-xs text-muted-foreground'>
+              When on, candidates can send interest requests for this event.
+            </p>
+          </div>
+
           {saveError ? (
             <p
               role='alert'

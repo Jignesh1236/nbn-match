@@ -412,10 +412,10 @@ button { user-select: none; -webkit-user-select: none; }
 .footer-brand p,.footer-information p { color:#ddc3cd; line-height:1.7; }
 .footer-links,.footer-information { display:grid; gap:12px; align-content:start; }
 .footer-links h3,.footer-information h3 { margin:7px 0 5px; color:#fff8fa; font-size:.95rem; }
-.footer-links a { color:#f8e9ed; text-decoration:none; font-size:.9rem; }
+.footer-links a,.footer-information a { color:#f8e9ed; text-decoration:none; font-size:.9rem; }
 .footer-links a,.footer-information p { margin:0; font-size:.88rem; }
-.footer-links a { transition:color .18s ease,transform .18s ease; }
-.footer-links a:hover { color:#fff; transform:translateX(3px); }
+.footer-links a,.footer-information a { transition:color .18s ease,transform .18s ease; }
+.footer-links a:hover,.footer-information a:hover { color:#fff; transform:translateX(3px); }
 .footer-bottom { display:flex; justify-content:space-between; gap:16px; border-top:1px solid #ffffff28; margin-top:40px; padding-top:20px; color:#d7b8c5; font-size:.82rem; }
 .video-dialog-backdrop { position:fixed; inset:0; z-index:80; display:grid; place-items:center; padding:20px; background:#30121fba; }
 .video-dialog { width:min(540px,100%); position:relative; padding:34px; border-radius:18px; background:#fffaf7; box-shadow:0 24px 80px #210b1660; }
@@ -466,6 +466,53 @@ button { user-select: none; -webkit-user-select: none; }
  .container-wide{width:calc(100% - 30px)}.hero-visual{height:360px}.hero-note{width:145px;right:-3px;bottom:18px;font-size:.83rem;padding:14px}.steps-grid,.video-grid{grid-template-columns:1fr}.video-thumb{height:180px}.video-empty-state{align-items:flex-start;padding:21px 18px;gap:13px}.video-empty-icon{width:44px;height:44px;flex-basis:44px}.cta-band{padding:30px 24px;align-items:flex-start;flex-direction:column}.form-grid,.review-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.form-actions{flex-direction:column-reverse}.form-actions button{width:100%}.progress-list{grid-template-columns:repeat(2,1fr)}.form-aside{padding:18px}.about-photo{height:330px}.footer-grid{grid-template-columns:1fr;gap:28px}.footer-brand{grid-column:auto}.footer-links{grid-template-columns:1fr 1fr;gap:12px 18px}.footer-bottom{flex-direction:column;gap:5px;margin-top:30px}.registration-header-actions{gap:10px}.language-toggle{min-height:38px;padding:0 10px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* ─── Candidate page Material 3 styles ───────────────────────────────────── */
+.candidate-app { min-height: 100vh; background: #fdf5f7; color: #270d15; font-family: system-ui, sans-serif; }
+.candidate-skip-link { position: absolute; top: -40px; left: 0; background: #9c2c52; color: white; padding: 8px 16px; z-index: 100; transition: top 0.2s; }
+.candidate-skip-link:focus { top: 0; }
+.m3-top-app-bar { background: #fff; border-bottom: 1px solid #eed6df; padding: 12px 16px; position: sticky; top: 0; z-index: 50; }
+.m3-top-app-bar__inner { display: flex; align-items: center; justify-content: space-between; gap: 12; max-width: 1280px; margin: 0 auto; }
+.m3-brand { display: flex; align-items: center; gap: 10px; }
+.m3-brand__mark { color: #9c2c52; }
+.m3-brand__name { font-weight: 700; font-size: 16px; color: #5a1838; margin: 0; }
+.m3-brand__sub { font-size: 12px; color: #7d4f63; margin: 0; }
+.m3-assist-chip { display: inline-flex; align-items: center; gap: 6px; background: #fbeaf0; color: #7a1b42; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.m3-main { padding: 24px 16px; max-width: 1280px; margin: 0 auto; }
+.m3-main--narrow { max-width: 520px; }
+.m3-status { text-align: center; padding: 60px 24px; }
+.m3-status__icon { color: #9c2c52; margin-bottom: 16px; }
+.m3-status__icon--warning { color: #d97706; }
+.m3-status__icon--error { color: #dc2626; }
+.m3-status__icon--large { font-size: 48px; }
+.m3-eyebrow { color: #a52b55; text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.69rem; font-weight: 700; margin-bottom: 8px; }
+.m3-headline-medium { font-size: 1.5rem; font-weight: 700; color: #542237; margin-bottom: 8px; }
+.m3-body-large { font-size: 1rem; color: #74636a; line-height: 1.6; }
+.m3-auth { background: #fff; border: 1px solid #eed6df; border-radius: 18px; padding: 32px 24px; text-align: center; }
+.m3-auth__icon { color: #9c2c52; margin-bottom: 16px; }
+.m3-auth__form { text-align: left; margin-top: 24px; }
+.m3-field-label { display: block; color: #5d3c49; font-weight: 700; font-size: 0.88rem; margin-bottom: 8px; }
+.m3-text-field { position: relative; display: flex; align-items: center; border: 1px solid #ddcbd1; border-radius: 9px; background: #fffdfa; transition: border-color 0.2s; }
+.m3-text-field:focus-within { border-color: #9c2c52; box-shadow: 0 0 0 3px rgba(156, 44, 82, 0.1); }
+.m3-text-field[data-invalid='true'] { border-color: #dc2626; }
+.m3-text-field__icon { color: #826a74; margin-left: 12px; flex-shrink: 0; }
+.m3-text-field input { flex: 1; border: none; background: transparent; padding: 12px 13px; font-size: 16px; outline: none; min-height: 46px; }
+.m3-field-support { font-size: 0.78rem; color: #84747b; margin-top: 6px; }
+.m3-field-support--error { color: #dc2626; }
+.m3-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 22px; border-radius: 999px; font-weight: 700; font-size: 16px; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; border: none; }
+.m3-button--filled { background: #9c2c52; color: #fff; }
+.m3-button--filled:hover { background: #86183d; }
+.m3-button--filled:disabled { opacity: 0.6; cursor: not-allowed; }
+.m3-button--block { width: 100%; }
+.m3-alert { display: flex; gap: 12px; padding: 12px 14px; background: #fff1f3; border: 1px solid #f3c5d1; border-radius: 10px; margin-bottom: 16px; text-align: left; }
+.m3-alert__icon { color: #dc2626; flex-shrink: 0; }
+.m3-alert__body { flex: 1; }
+.m3-alert__title { font-weight: 700; color: #8d2944; margin: 0 0 4px; }
+.m3-alert__text { font-size: 14px; color: #8d2944; margin: 0; }
+.m3-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.75s linear infinite; }
+.m3-spinner--large { width: 32px; height: 32px; border-width: 3px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.m3-footer-note { text-align: center; color: #7d4f63; font-size: 13px; margin-top: 24px; }
 
 /* ─── Admin panel theme (light, monospace) ───────────────────────────────────
    Scoped to .admin-shell so the public site is completely unaffected.

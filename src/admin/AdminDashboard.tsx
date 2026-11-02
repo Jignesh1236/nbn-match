@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [events, setEvents] = useState<Array<{ id: string; event_code: string; date?: string | null }>>([]);
+  const [eventLoadError, setEventLoadError] = useState<string | null>(null);
 
   // Keep search engines from indexing the admin area.
   useEffect(() => {
@@ -35,15 +36,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     void listEvents()
       .then((rows: Array<{ id: string; event_code: string; date?: string | null }>) => {
+        setEventLoadError(null);
         setEvents(rows);
         setSelectedEventId((current) => {
           if (current && rows.some((row) => row.id === current)) return current;
           return rows[0]?.id ?? null;
         });
       })
-      .catch(() => {
-        setEvents([]);
-        setSelectedEventId(null);
+      .catch((error: unknown) => {
+        setEventLoadError(error instanceof Error ? error.message : 'Failed to load events.');
       });
   }, []);
 
@@ -134,10 +135,27 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {events.length > 0 ? (
+        {eventLoadError ? (
+          <div className='rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive'>
+            <p role='alert'>Could not load the event selector: {eventLoadError}</p>
+            <button type='button' onClick={() => {
+              setEventLoadError(null);
+              void listEvents().then((rows) => {
+                setEvents(rows);
+                setSelectedEventId((current) => current && rows.some((row) => row.id === current)
+                  ? current
+                  : rows[0]?.id ?? null);
+              }).catch((error: unknown) => {
+                setEventLoadError(error instanceof Error ? error.message : 'Failed to load events.');
+              });
+            }} className='mt-2 rounded-md border border-destructive/40 px-3 py-1.5 font-medium'>
+              Retry
+            </button>
+          </div>
+        ) : events.length > 0 ? (
           <div className='rounded-md border border-border bg-card p-3'>
             <label htmlFor='selected-event' className='mb-2 block text-sm font-medium text-foreground'>
-              Active event
+              Event for candidate links and requests
             </label>
             <select
               id='selected-event'
@@ -160,14 +178,31 @@ export default function AdminDashboard() {
           </div>
         ) : null}
 
-        <EventsManager />
+        <EventsManager onEventSaved={(saved) => {
+          setEvents((previous) => previous.some((event) => event.id === saved.id)
+            ? previous.map((event) => event.id === saved.id
+              ? { ...event, event_code: saved.event_code, date: saved.date }
+              : event)
+            : [{ id: saved.id, event_code: saved.event_code, date: saved.date }, ...previous]);
+          setSelectedEventId(saved.id);
+        }} />
+        <section className='space-y-3'>
+          <div>
+            <h2 className='text-lg font-semibold tracking-tight'>Candidate links and interest requests</h2>
+            <p className='mt-0.5 text-sm text-muted-foreground'>
+              Requests show candidate interest activity; they are not scheduled or booked meetings.
+            </p>
+          </div>
         {selectedEventId ? (
-          <CandidateLinksPanel eventId={selectedEventId} />
+            <CandidateLinksPanel
+              eventId={selectedEventId}
+              eventLabel={selectedEvent ? `${selectedEvent.event_code}${selectedEvent.date ? ` · ${selectedEvent.date}` : ''}` : 'selected event'}
+            />
         ) : (
           <p className='text-sm text-muted-foreground'>Create an event before generating candidate links.</p>
         )}
+        </section>
       </main>
     </div>
   );
 }
-

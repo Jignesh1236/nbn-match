@@ -38,6 +38,16 @@ VITE_REGISTRATION_ENDPOINT=https://your-api.example.com/api/registrations
 
 The form will `POST` the entries as JSON to that URL. Without it, the form shows a "registration not yet open" notice.
 
+## Event gender capacity
+
+Apply `supabase/migrations/012_gender_capacity.sql` in the Supabase SQL Editor
+before deploying the matching app changes. The migration requires existing event
+capacities to be zero (unlimited) or non-negative even numbers; it reports any
+legacy event codes that need correction before it can be applied. For finite
+capacities, half the places are reserved for men and half for women. The database
+serializes registrations per event and rejects registrations when the selected
+gender's places or the event's total capacity are full.
+
 ## Deploying
 
 Build output is a static site in `dist/`.

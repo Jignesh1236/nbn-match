@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  buildWhatsAppShareUrl,
+  formatWhatsAppNumber,
   isPhoneLengthValid,
   normalizePhoneDigits,
   normalizedPhoneForMatch,
@@ -32,4 +34,17 @@ test('phonesMatch treats country-code and local formats as the same number', () 
   assert.equal(phonesMatch('+880 1712-345678', '01712345678'), true);
   assert.equal(phonesMatch('+8801712345678', '+8801812345678'), false);
   assert.equal(phonesMatch('01712345678', null), false);
+});
+
+test('formatWhatsAppNumber converts local Bangladeshi numbers into international format', () => {
+  assert.equal(formatWhatsAppNumber('01712345678'), '+8801712345678');
+  assert.equal(formatWhatsAppNumber('+880 1712-345678'), '+8801712345678');
+  assert.equal(formatWhatsAppNumber('12345'), null);
+});
+
+test('buildWhatsAppShareUrl opens a direct click-to-chat link for valid numbers', () => {
+  const url = buildWhatsAppShareUrl('01712345678', 'NBN Match Making Event\nhttps://example.com/v/abc123');
+  assert.ok(url.startsWith('https://wa.me/+8801712345678?text='));
+  assert.ok(url.includes('NBN%20Match%20Making%20Event'));
+  assert.ok(buildWhatsAppShareUrl(null, 'hello').includes('https://wa.me/?text='));
 });

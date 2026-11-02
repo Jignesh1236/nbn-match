@@ -65,6 +65,7 @@ const copy = {
     footerInformation: 'গুরুত্বপূর্ণ তথ্য',
     footerPrivacy: 'গোপনীয়তা নীতি',
     footerTerms: 'শর্তাবলি',
+    footerContact: 'যোগাযোগ',
     footerCopyright: 'সকল অধিকার সংরক্ষিত।',
     footerNavLabel: 'ফুটার নেভিগেশন',
   },
@@ -126,6 +127,7 @@ const copy = {
     footerInformation: 'Information',
     footerPrivacy: 'Privacy policy',
     footerTerms: 'Terms',
+    footerContact: 'Contact',
     footerCopyright: 'All rights reserved.',
     footerNavLabel: 'Footer navigation',
   },
@@ -218,6 +220,8 @@ function Footer() {
         <h3>{text.footerInformation}</h3>
         <p>{text.footerPrivacy}</p>
         <p>{text.footerTerms}</p>
+        <h3>{text.footerContact}</h3>
+        <a href="mailto:iwillchangeleater@gmail.com">iwillchangeleater@gmail.com</a>
       </div>
     </div>
     <div className="footer-bottom">

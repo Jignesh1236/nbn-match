@@ -338,6 +338,20 @@ function RegistrationForm() {
       setSubmitError(text.registrationClosedError);
       return;
     }
+    if (values.gender === 'man' && event.men_remaining === 0) {
+      setSubmitError(text.menCapacityError);
+      return;
+    }
+    if (values.gender === 'woman' && event.women_remaining === 0) {
+      setSubmitError(text.womenCapacityError);
+      return;
+    }
+    if (!values.gender) {
+      setErrors((previous) => ({ ...previous, gender: text.requiredError }));
+      setStep(0);
+      setSubmitError(null);
+      return;
+    }
 
     const paymentErrors: Record<string, string> = {};
     if (paymentMethod !== 'bkash' && paymentMethod !== 'nagad' && paymentMethod !== 'rocket' && paymentMethod !== 'khalti') paymentErrors.paymentMethod = text.paymentMethodError;
@@ -362,7 +376,7 @@ function RegistrationForm() {
 
       const input: RegistrationInput = {
         event_id: event.id,
-        gender: values.gender || 'other',
+        gender: values.gender,
         private_fields: collectPrivateFieldNames(siblings.length),
         phone: normalizePhoneForStorage(values.phone),
         photo_path: photoPath,
@@ -399,6 +413,10 @@ function RegistrationForm() {
       const message = err instanceof Error ? err.message : '';
       const friendly = message.includes('not open')
         ? text.eventClosedError
+        : message.includes('maximum number of male participants')
+        ? text.menCapacityError
+        : message.includes('maximum number of female participants')
+        ? text.womenCapacityError
         : message.includes('maximum')
         ? text.eventFullError
         : message.includes('23505') || (err as { code?: string })?.code === '23505'
@@ -451,6 +469,10 @@ function RegistrationForm() {
               {event.age_range && (
                 <span style={{ marginLeft: 12, color: '#75616a' }}>{text.ageRangeLabel}: <strong style={{ color: '#5d3446' }}>{event.age_range}</strong></span>
               )}
+              <p style={{ margin: '10px 0 0', color: '#75616a', fontSize: '0.9rem' }}>
+                <strong style={{ color: '#5d3446' }}>{text.genderAvailabilityLabel}</strong>{' '}
+                {text.menSpotsLabel}: {event.men_remaining ?? '∞'} · {text.womenSpotsLabel}: {event.women_remaining ?? '∞'}
+              </p>
             </div>
           ) : (
             <p

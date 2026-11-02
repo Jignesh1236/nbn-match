@@ -190,6 +190,9 @@ export const registrationLabels = {
     eventLoadError: 'ইভেন্টের তথ্য আনা যায়নি।',
     noOpenEvent: 'এই মুহূর্তে কোনো ইভেন্ট রেজিস্ট্রেশনের জন্য খোলা নেই। কিছুক্ষণ পর আবার দেখুন।',
     eventCodeLabel: 'ইভেন্ট কোড:',
+    genderAvailabilityLabel: 'লিঙ্গভিত্তিক আসন:',
+    menSpotsLabel: 'পুরুষ',
+    womenSpotsLabel: 'নারী',
     priceLabel: 'মূল্য:',
     discountPriceLabel: 'ছাড়িত মূল্য:',
     siblingsHeading: 'ভাই ও বোন',
@@ -221,6 +224,8 @@ export const registrationLabels = {
     overseasFeeLabel: 'বিদেশে ভিডিও কল ফি:',
     eventClosedError: 'দুঃখিত, এই ইভেন্টের রেজিস্ট্রেশন বন্ধ হয়ে গেছে।',
     eventFullError: 'দুঃখিত, এই ইভেন্টে সর্বোচ্চ অংশগ্রহণকারী নির্ধারিত সংখ্যা পূর্ণ হয়ে গেছে।',
+    menCapacityError: 'দুঃখিত, এই ইভেন্টে পুরুষদের সব আসন পূর্ণ হয়ে গেছে।',
+    womenCapacityError: 'দুঃখিত, এই ইভেন্টে নারীদের সব আসন পূর্ণ হয়ে গেছে।',
     duplicateTransactionError: 'এই ট্রানজেকশন আইডি দিয়ে আগেই রেজিস্ট্রেশন হয়েছে। আপনি যদি আগে সফলভাবে জমা দিয়ে থাকেন, তাহলে আর জমা দেওয়ার প্রয়োজন নেই। অন্যথায় ভিন্ন ট্রানজেকশন আইডি ব্যবহার করুন।',
     submitFailedError: 'রেজিস্ট্রেশন জমা দেওয়া যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।',
     submittedTitle: 'রেজিস্ট্রেশন সম্পন্ন',
@@ -260,6 +265,9 @@ export const registrationLabels = {
     eventLoadError: 'Failed to load event.',
     noOpenEvent: 'No event is open for registration right now. Please check back soon.',
     eventCodeLabel: 'Event code:',
+    genderAvailabilityLabel: 'Spots by gender:',
+    menSpotsLabel: 'Men',
+    womenSpotsLabel: 'Women',
     priceLabel: 'Price:',
     discountPriceLabel: 'Discounted price:',
     siblingsHeading: 'Siblings',
@@ -291,6 +299,8 @@ export const registrationLabels = {
     overseasFeeLabel: 'Overseas video call fee:',
     eventClosedError: 'Sorry, registration for this event is closed.',
     eventFullError: 'Sorry, this event has reached its maximum number of participants.',
+    menCapacityError: 'Sorry, all men’s spots for this event are full.',
+    womenCapacityError: 'Sorry, all women’s spots for this event are full.',
     duplicateTransactionError: 'A registration with this transaction ID already exists. If you already submitted successfully, no further action is needed. Otherwise use a different transaction ID.',
     submitFailedError: 'Could not submit your registration. Please try again later.',
     submittedTitle: 'Registration complete',
@@ -310,5 +320,4 @@ export function getRegistrationValueLabel(name: string, value: string, language:
     .find((candidate) => candidate.name === name);
   return field?.options?.find((candidate) => candidate.value === value)?.label[language] ?? value;
 }
-
 

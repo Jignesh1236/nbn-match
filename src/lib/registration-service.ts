@@ -21,6 +21,7 @@ export function buildUploadOptions(file: Pick<File, 'name' | 'type'>) {
 export type OpenEvent = {
   id: string;
   event_code: string;
+  date: string | null;
   price: number;
   discount_price: number;
   max_participants: number;
@@ -29,11 +30,12 @@ export type OpenEvent = {
   religion: string | null;
   shift: string | null;
   extra_guardian_charge: number;
+  friend_requests_enabled: boolean;
   men_registered: number;
   women_registered: number;
   men_remaining: number | null;
   women_remaining: number | null;
-} | null;
+};
 
 export type RegistrationInput = {
   event_id: string;
@@ -62,13 +64,22 @@ export type RegistrationResult = {
 };
 
 /**
- * Fetch the single open event's safe fields via the get_open_event() RPC.
- * Returns null when no event is open (registration closed).
+ * Fetch all open events' safe fields via the get_open_events() RPC.
+ * Returns an empty array when no event is open (registration closed).
+ */
+export async function getOpenEvents(): Promise<OpenEvent[]> {
+  const { data, error } = await supabase.rpc('get_open_events');
+  if (error) throw error;
+  return (data ?? []) as OpenEvent[];
+}
+
+/**
+ * Fetch the single open event (kept for backward compatibility).
+ * Returns the first open event, or null when none is open.
  */
 export async function getOpenEvent(): Promise<OpenEvent> {
-  const { data, error } = await supabase.rpc('get_open_event');
-  if (error) throw error;
-  return (data?.[0] as OpenEvent) ?? null;
+  const events = await getOpenEvents();
+  return events[0] ?? null;
 }
 
 /**

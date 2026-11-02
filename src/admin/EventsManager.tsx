@@ -130,6 +130,7 @@ export function EventsManager({ onEventSaved }: { onEventSaved?: (event: AdminEv
       links_open_at: row.links_open_at,
       links_close_at: row.links_close_at,
       max_requests_per_person: row.max_requests_per_person,
+      friend_requests_enabled: row.friend_requests_enabled,
     });
     setNotice(null);
     setShowForm(true);

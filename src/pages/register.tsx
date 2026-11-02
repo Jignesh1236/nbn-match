@@ -22,7 +22,7 @@ import {
   validateSiblings,
 } from '@/lib/registration-siblings';
 import {
-  getOpenEvent,
+  getOpenEvents,
   submitRegistration,
   uploadDocument,
   type OpenEvent,
@@ -238,7 +238,8 @@ function RegistrationForm() {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [transactionId, setTransactionId] = useState('');
   const [senderNumber, setSenderNumber] = useState('');
-  const [event, setEvent] = useState<OpenEvent>(null);
+  const [events, setEvents] = useState<OpenEvent[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<OpenEvent | null>(null);
   const [eventError, setEventError] = useState<string | null>(null);
   const [loadingEvent, setLoadingEvent] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -272,10 +273,18 @@ function RegistrationForm() {
 
   useEffect(() => {
     let cancelled = false;
-    async function loadEvent() {
+    async function loadEvents() {
       try {
-        const ev = await getOpenEvent();
-        if (!cancelled) setEvent(ev);
+        const evs = await getOpenEvents();
+        if (!cancelled) {
+          setEvents(evs);
+          // Auto-select the first event that still has capacity (or the first
+          // event if all are full/unlimited so the user can still see the form).
+          const first = evs.find(
+            e => e.men_remaining === null || e.women_remaining === null || e.men_remaining! > 0 || e.women_remaining! > 0
+          );
+          setSelectedEvent(first ?? evs[0] ?? null);
+        }
       } catch (err) {
         if (!cancelled) {
           setEventError(err instanceof Error && err.message ? err.message : text.eventLoadError);
@@ -284,7 +293,7 @@ function RegistrationForm() {
         if (!cancelled) setLoadingEvent(false);
       }
     }
-    loadEvent();
+    loadEvents();
     return () => { cancelled = true; };
     // Fetched once for the lifetime of the form; `text` only supplies a fallback string.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -301,8 +310,8 @@ function RegistrationForm() {
     });
     if (step === 0 && values.phone && !isPhoneLengthValid(values.phone)) next.phone = text.phoneError;
     if (step === 0 && values.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email)) next.email = text.emailError;
-    if (step === 0 && values.birthDate && event?.age_range) {
-      const range = parseAgeRange(event.age_range);
+    if (step === 0 && values.birthDate && selectedEvent?.age_range) {
+      const range = parseAgeRange(selectedEvent.age_range);
       const age = calcAge(values.birthDate);
       if (range && age !== null && (age < range.min || age > range.max)) {
         next.birthDate = text.ageRangeError;
@@ -334,15 +343,15 @@ function RegistrationForm() {
 
   const submit = async () => {
     if (!validate()) return;
-    if (!event) {
+    if (!selectedEvent) {
       setSubmitError(text.registrationClosedError);
       return;
     }
-    if (values.gender === 'man' && event.men_remaining === 0) {
+    if (values.gender === 'man' && selectedEvent.men_remaining === 0) {
       setSubmitError(text.menCapacityError);
       return;
     }
-    if (values.gender === 'woman' && event.women_remaining === 0) {
+    if (values.gender === 'woman' && selectedEvent.women_remaining === 0) {
       setSubmitError(text.womenCapacityError);
       return;
     }
@@ -375,7 +384,7 @@ function RegistrationForm() {
       const accompanyingNidPath = await uploadDocument(accompanyingNidFile!);
 
       const input: RegistrationInput = {
-        event_id: event.id,
+        event_id: selectedEvent.id,
         gender: values.gender,
         private_fields: collectPrivateFieldNames(siblings.length),
         phone: normalizePhoneForStorage(values.phone),
@@ -389,7 +398,7 @@ function RegistrationForm() {
         guardian_phone: values.guardianPhone || null,
         guardian_age: values.guardianAge ? Number(values.guardianAge) : null,
         guardian_relation: values.guardianRelation || null,
-        guardian_charge: values.videoCallOverseas === 'yes' ? event?.extra_guardian_charge ?? 0 : 0,
+        guardian_charge: values.videoCallOverseas === 'yes' ? selectedEvent?.extra_guardian_charge ?? 0 : 0,
         father_phone: values.fatherPhone || null,
         mother_phone: values.motherPhone || null,
         form_data: {
@@ -456,31 +465,76 @@ function RegistrationForm() {
           <span className="eyebrow">{text.brand}</span>
           <h1 style={{ fontSize: 'clamp(2rem,4vw,3rem)', color: '#55263b', margin: '8px 0' }}>{text.title}</h1>
           <p style={{ color: '#75616a', margin: 0 }}>{text.intro}</p>
-          {event ? (
-            <div style={{ marginTop: 16, padding: 14, background: '#fffaf7', borderRadius: 9, border: '1px solid #e8d9c8' }}>
-              <strong style={{ color: '#5d3446' }}>{text.eventCodeLabel}</strong> {event.event_code}
-              <span style={{ marginLeft: 16, color: '#75616a' }}>{text.priceLabel} {event.price}</span>
-              {event.discount_price > 0 && (
-                <span style={{ marginLeft: 12, color: '#2e7d5b' }}>{text.discountPriceLabel} {event.discount_price}</span>
+          {loadingEvent ? (
+            <p
+              style={{ marginTop: 16, padding: 14, background: '#f4f1f7', borderRadius: 9, border: '1px solid #e0d3e0', color: '#75616a', fontSize: '0.9rem' }}
+              role="status"
+            >
+              {text.loadingEvent}
+            </p>
+          ) : eventError ? (
+            <p
+              style={{ marginTop: 16, padding: 14, background: '#f4f1f7', borderRadius: 9, border: '1px solid #e0d3e0', color: '#75616a', fontSize: '0.9rem' }}
+              role="status"
+            >
+              {eventError}
+            </p>
+          ) : events.length === 0 ? (
+            <p
+              style={{ marginTop: 16, padding: 14, background: '#f4f1f7', borderRadius: 9, border: '1px solid #e0d3e0', color: '#75616a', fontSize: '0.9rem' }}
+              role="status"
+              data-testid="status-no-open-event"
+            >
+              {text.noOpenEvent}
+            </p>
+          ) : selectedEvent ? (
+            <>
+              {events.length > 1 && (
+                <div style={{ marginTop: 12, marginBottom: 8 }}>
+                  <label style={{ display: 'block', marginBottom: 6, fontSize: '0.9rem', color: '#452b36' }}>{text.eventSelectLabel}</label>
+                  <select
+                    value={selectedEvent?.id ?? ''}
+                    onChange={e => {
+                      const picked = events.find(ev => ev.id === e.target.value);
+                      setSelectedEvent(picked ?? null);
+                    }}
+                    style={{
+                      width: '100%', padding: '8px 12px', borderRadius: 7, border: '1px solid #ddcbd1',
+                      background: '#fff', color: '#452b36', fontSize: '0.95rem',
+                    }}
+                  >
+                    {events.map(ev => {
+                      const full = ev.men_remaining === 0 || ev.women_remaining === 0;
+                      return (
+                        <option key={ev.id} value={ev.id} disabled={full}>
+                          {ev.event_code} · {ev.date} {full ? ' ' + text.eventFull : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
               )}
-              {values.videoCallOverseas === 'yes' && event.extra_guardian_charge && (
-                <span style={{ marginLeft: 12, color: '#2e7d5b' }}>{text.overseasFeeLabel} {event.extra_guardian_charge}</span>
-              )}
-              {event.age_range && (
-                <span style={{ marginLeft: 12, color: '#75616a' }}>{text.ageRangeLabel}: <strong style={{ color: '#5d3446' }}>{event.age_range}</strong></span>
-              )}
-              <p style={{ margin: '10px 0 0', color: '#75616a', fontSize: '0.9rem' }}>
-                <strong style={{ color: '#5d3446' }}>{text.genderAvailabilityLabel}</strong>{' '}
-                {text.menSpotsLabel}: {event.men_remaining ?? '∞'} · {text.womenSpotsLabel}: {event.women_remaining ?? '∞'}
-              </p>
-            </div>
+              <div style={{ marginTop: 16, padding: 14, background: '#fffaf7', borderRadius: 9, border: '1px solid #e8d9c8' }}>
+                <strong style={{ color: '#5d3446' }}>{text.eventCodeLabel}</strong> {selectedEvent.event_code}
+                <span style={{ marginLeft: 16, color: '#75616a' }}>{text.priceLabel} {selectedEvent.price}</span>
+                {selectedEvent.discount_price > 0 && (
+                  <span style={{ marginLeft: 12, color: '#2e7d5b' }}>{text.discountPriceLabel} {selectedEvent.discount_price}</span>
+                )}
+                {values.videoCallOverseas === 'yes' && selectedEvent.extra_guardian_charge && (
+                  <span style={{ marginLeft: 12, color: '#2e7d5b' }}>{text.overseasFeeLabel} {selectedEvent.extra_guardian_charge}</span>
+                )}
+                {selectedEvent.age_range && (
+                  <span style={{ marginLeft: 12, color: '#75616a' }}>{text.ageRangeLabel}: <strong style={{ color: '#5d3446' }}>{selectedEvent.age_range}</strong></span>
+                )}
+              </div>
+            </>
           ) : (
             <p
               style={{ marginTop: 16, padding: 14, background: '#f4f1f7', borderRadius: 9, border: '1px solid #e0d3e0', color: '#75616a', fontSize: '0.9rem' }}
               role="status"
               data-testid="status-no-open-event"
             >
-              {loadingEvent ? text.loadingEvent : (eventError || text.noOpenEvent)}
+              {text.noOpenEvent}
             </p>
           )}
         </div>

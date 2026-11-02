@@ -48,6 +48,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_target: 'This profile is not available.',
   already_sent: 'You have already sent a request to this candidate.',
   limit_full: 'You have used all your requests for this link.',
+  sent_limit_full: 'You have used all your requests for this link.',
+  accepted_limit_full: 'You have reached the maximum of 4 accepted requests.',
+  friend_requests_disabled: 'Friend requests are not enabled for this event.',
   not_found: 'That request could not be found.',
   network_error: 'Connection problem. Please check your internet and try again.',
 };
@@ -105,8 +108,13 @@ type ProfileItem = {
 
 type RequestItem = {
   candidate_code: string;
-  status: 'sent' | 'withdrawn';
+  status: 'sent' | 'withdrawn' | 'accepted';
   created_at: string;
+};
+
+type AcceptedItem = {
+  candidate_code: string;
+  accepted_at: string;
 };
 
 type CandidateOpenResponse = {
@@ -135,6 +143,9 @@ type CandidateMyRequestsResponse = {
   items: RequestItem[];
   requests_used: number;
   max_requests: number;
+  accepted_items: AcceptedItem[];
+  accepted_count: number;
+  max_accepted: number;
   closes_at: string;
   server_now: string;
 };
@@ -143,6 +154,8 @@ type CandidateActionResponse = {
   ok: true;
   requests_used: number;
   max_requests: number;
+  accepted_count?: number;
+  ready_for_event?: boolean;
 };
 
 function formatCountdown(totalSeconds: number | null) {
@@ -226,6 +239,9 @@ function CandidatePage() {
   const [sessionToken, setSessionToken] = useState<string | null>(() => readStoredSession(routeToken));
   const [profiles, setProfiles] = useState<ProfileItem[]>([]);
   const [requests, setRequests] = useState<RequestItem[]>([]);
+  const [acceptedItems, setAcceptedItems] = useState<AcceptedItem[]>([]);
+  const [acceptedCount, setAcceptedCount] = useState(0);
+  const maxAccepted = 4;
   const [requestsUsed, setRequestsUsed] = useState(0);
   const [maxRequests, setMaxRequests] = useState(8);
   const [error, setError] = useState<string | null>(null);
@@ -258,6 +274,8 @@ function CandidatePage() {
     setCandidateCode('');
     setProfiles([]);
     setRequests([]);
+    setAcceptedItems([]);
+    setAcceptedCount(0);
     setRequestsUsed(0);
     setLoadingProfiles(false);
     setError(code);
@@ -336,6 +354,8 @@ function CandidatePage() {
     setCandidateCode('');
     setProfiles([]);
     setRequests([]);
+    setAcceptedItems([]);
+    setAcceptedCount(0);
     setRequestsUsed(0);
     setError(null);
     setShowPhoneForm(true);
@@ -363,6 +383,8 @@ function CandidatePage() {
 
       setProfiles(profilesRes.items ?? []);
       setRequests(requestsRes.items ?? []);
+      setAcceptedItems(requestsRes.accepted_items ?? []);
+      setAcceptedCount(requestsRes.accepted_count ?? 0);
       setRequestsUsed(profilesRes.requests_used ?? requestsRes.requests_used ?? 0);
       setMaxRequests(profilesRes.max_requests ?? requestsRes.max_requests ?? 8);
       const closesAtValue = profilesRes.closes_at || requestsRes.closes_at;
@@ -454,13 +476,15 @@ function CandidatePage() {
     }
   };
 
-  const applyAction = async (targetCode: string, type: 'send' | 'withdraw') => {
+  const applyAction = async (targetCode: string, type: 'send' | 'withdraw' | 'accept') => {
     if (!sessionToken) return;
     setActioning(prev => ({ ...prev, [targetCode]: true }));
     setError(null);
 
     try {
-      const fn = type === 'send' ? 'candidate-send-request' : 'candidate-withdraw-request';
+      const fn = type === 'send' ? 'candidate-send-request'
+        : type === 'accept' ? 'candidate-accept-request'
+        : 'candidate-withdraw-request';
       const result = await callCandidateFunction<CandidateActionResponse>(fn, {
         session_token: sessionToken,
         target_code: targetCode,
@@ -468,6 +492,7 @@ function CandidatePage() {
 
       setRequestsUsed(result.requests_used ?? requestsUsed);
       setMaxRequests(result.max_requests ?? maxRequests);
+      if (result.accepted_count !== undefined) setAcceptedCount(result.accepted_count);
       await loadSessionData(sessionToken);
     } catch (err) {
       const raw = err instanceof Error && err.message ? err.message : 'session_invalid';
@@ -751,17 +776,39 @@ function CandidatePage() {
         </div>
 
         <div style={styles.requestsCard}>
-          <h2 style={styles.sectionTitle}>Your requests</h2>
+          <h2 style={styles.sectionTitle}>Sent requests ({requestsUsed}/{maxRequests})</h2>
           {requests.length === 0 ? (
-            <p style={styles.muted}>No requests yet.</p>
+            <p style={styles.muted}>No sent requests yet.</p>
           ) : (
             <ul style={styles.requestList}>
               {requests.map(request => (
                 <li key={`${request.candidate_code}-${request.created_at}`} style={styles.requestRow}>
                   <span>{request.candidate_code}</span>
-                  <span style={request.status === 'sent' ? styles.sentStatus : styles.withdrawnStatus}>
-                    {request.status}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={styles.sentStatus}>sent</span>
+                    <button
+                      type='button'
+                      onClick={() => applyAction(request.candidate_code, 'withdraw')}
+                      disabled={!!actioning[request.candidate_code]}
+                      style={styles.inlineWithdraw}
+                    >
+                      Withdraw
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <h2 style={{ ...styles.sectionTitle, marginTop: 20 }}>Accepted ({acceptedCount}/{maxAccepted})</h2>
+          {acceptedItems.length === 0 ? (
+            <p style={styles.muted}>No accepted requests yet.</p>
+          ) : (
+            <ul style={styles.requestList}>
+              {acceptedItems.map(item => (
+                <li key={item.candidate_code} style={styles.requestRow}>
+                  <span>{item.candidate_code}</span>
+                  <span style={styles.acceptedStatus}>Accepted ✓</span>
                 </li>
               ))}
             </ul>
@@ -1089,6 +1136,20 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#8b5a65',
     fontWeight: 700,
     textTransform: 'capitalize',
+  },
+  acceptedStatus: {
+    color: '#1a5c8a',
+    fontWeight: 700,
+  },
+  inlineWithdraw: {
+    border: '1px solid #d9a3b4',
+    borderRadius: 6,
+    background: '#fff',
+    color: '#8d2944',
+    padding: '4px 8px',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
   },
   limitBox: {
     marginBottom: 16,

@@ -99,6 +99,10 @@ export const ERROR_HTTP_STATUS: Record<string, number> = {
   invalid_target: 404,
   already_sent: 409,
   limit_full: 403,
+  sent_limit_full: 403,
+  accepted_limit_full: 403,
+  friend_requests_disabled: 403,
+  not_found: 404,
 };
 
 export function errorResponse(code: string, allowedOrigin: string | null): Response {

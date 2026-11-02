@@ -66,6 +66,8 @@ const copy = {
     footerPrivacy: 'গোপনীয়তা নীতি',
     footerTerms: 'শর্তাবলি',
     footerContact: 'যোগাযোগ',
+    footerEmail: 'iwillchangeleater@gmail.com', // TODO: replace with real contact email
+    footerPhone: '+880 1XXX-XXXXXX', // TODO: replace with real contact phone
     footerCopyright: 'সকল অধিকার সংরক্ষিত।',
     footerNavLabel: 'ফুটার নেভিগেশন',
   },
@@ -128,6 +130,8 @@ const copy = {
     footerPrivacy: 'Privacy policy',
     footerTerms: 'Terms',
     footerContact: 'Contact',
+    footerEmail: 'iwillchangeleater@gmail.com', // TODO: replace with real contact email
+    footerPhone: '+880 1XXX-XXXXXX', // TODO: replace with real contact phone
     footerCopyright: 'All rights reserved.',
     footerNavLabel: 'Footer navigation',
   },
@@ -221,7 +225,8 @@ function Footer() {
         <p>{text.footerPrivacy}</p>
         <p>{text.footerTerms}</p>
         <h3>{text.footerContact}</h3>
-        <a href="mailto:iwillchangeleater@gmail.com">iwillchangeleater@gmail.com</a>
+        <p><a href={`mailto:${text.footerEmail}`}>{text.footerEmail}</a></p>
+        <p><a href={`tel:${text.footerPhone}`}>{text.footerPhone}</a></p>
       </div>
     </div>
     <div className="footer-bottom">

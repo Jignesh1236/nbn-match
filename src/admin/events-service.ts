@@ -30,6 +30,7 @@ export interface AdminEvent {
   links_open_at: string | null;
   links_close_at: string | null;
   max_requests_per_person: number;
+  friend_requests_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -61,6 +62,7 @@ export interface EventFormValues {
   links_open_at: string | null;
   links_close_at: string | null;
   max_requests_per_person: number;
+  friend_requests_enabled: boolean;
 }
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
@@ -77,6 +79,7 @@ export const EMPTY_EVENT_FORM: EventFormValues = {
   links_open_at: null,
   links_close_at: null,
   max_requests_per_person: 8,
+  friend_requests_enabled: false,
 };
 
 /** Extra text shown when several events share one day (e.g. "Morning"). Null otherwise. */
@@ -95,6 +98,7 @@ export function eventFormFromRow(row: AdminEvent): EventFormValues {
     links_open_at: row.links_open_at,
     links_close_at: row.links_close_at,
     max_requests_per_person: row.max_requests_per_person,
+    friend_requests_enabled: row.friend_requests_enabled,
   };
 }
 

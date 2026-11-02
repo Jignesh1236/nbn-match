@@ -622,7 +622,6 @@ export default function RegistrationsManager() {
               <option value=''>All genders</option>
               <option value='man'>Man</option>
               <option value='woman'>Woman</option>
-              <option value='other'>Other</option>
             </select>
 
             <select
